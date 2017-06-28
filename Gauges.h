@@ -31,60 +31,78 @@ class Gauge {
 		Gauge(Adafruit_GFX *display),
 		Gauge();
 
-        void
-            setPosition(uint16_t x, uint16_t y),
-            setSize(uint16_t w, uint16_t h),
-            setDepth(uint8_t z),
-            setAutoRedraw(bool val),
-            setVisible(bool val),
-            setDisplay(Adafruit_GFX *display),
-	    setFGColor(uint16_t fg),
-	    setBGColor(uint16_t bg),
-	    setFont(const GFXfont *font),
-	    setCursor(uint16_t x, uint16_t y),
-            redraw();
-
-        uint8_t
-            getDepth();
-
-	    void pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t w, uint16_t h);
+	   void
+	      setPosition(uint16_t x, uint16_t y),
+	      setSize(uint16_t w, uint16_t h),
+	      setDepth(uint8_t z),
+	      setAutoRedraw(bool val),
+	      setVisible(bool val),
+	      setDisplay(Adafruit_GFX *display),
+	    	setFGColor(uint16_t fg),
+	    	setBGColor(uint16_t bg),
+	      pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t w, uint16_t h),
+	      //redraw();
+			redraw();
+	   uint8_t
+	    	getDepth();
 
   	protected:
-  		uint16_t _x,_y,_w,_h,_fg,_bg,_cursor_x,_cursor_y;
-  		uint8_t  _z;
-  		Adafruit_GFX *_display;
-		GFXcanvas16 *_canvas;
-	        const GFXfont *_font;
-
-  		bool _autoRedraw,_visible;
+  		uint16_t 
+  			_x,
+  			_y,
+  			_w,
+  			_h,
+  			_fg,
+  			_bg;
+  		uint8_t  
+  			_z;
+  		Adafruit_GFX 
+  			*_display;
+		GFXcanvas16 
+			*_canvas;
+		bool 
+			_autoRedraw,
+			_visible;
 };
 
 class textGauge : public Gauge {
 
 	public:
-        textGauge();
-        //void
-            //setTextColor(uint16_t c),
-            //setFont(const GFXfont *f);
+	       textGauge(),
+	       textGauge(Adafruit_GFX *display),
+	       textGauge(Adafruit_GFX *display,char *_val);
+	       //textGauge(Adafruit_GFX *display,const char _val);
+		void
+	 	    setFont(const GFXfont *font),
+		    setCursor(uint16_t x, uint16_t y),
+	       setFormatString(String format),
+	       setValue(char *val),
+	       setValue(const char* val),
+	       redraw();
+	protected:
+		String _format;
+		uint16_t
+  			_cursor_x,
+  			_cursor_y,
+  			_str_len;
+  		char _val[255];
+		const GFXfont *_font;
 };
 
 class integerGauge : public textGauge {
 
 	public:
-        integerGauge(),
-        integerGauge(Adafruit_GFX *display),
-        integerGauge(Adafruit_GFX *display,int _val);
-	void
-            setValue(int val),
-	    setFormatString(String format),
-            redraw(void);
-	int
-            getValue();
-
+	        integerGauge(),
+	        integerGauge(Adafruit_GFX *display),
+	        integerGauge(Adafruit_GFX *display,int _val);	
+	   void
+	        setValue(int val),
+	        redraw();
+		int
+	       getValue();
 
 	private:
 		int _val;
-		String _format;
 };
 /*
 class stringGauge : public textGauge {

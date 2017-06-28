@@ -66,11 +66,11 @@ void Gauge::setBGColor(uint16_t bg){
     _bg=bg;
 }
 
-void Gauge::setFont(const GFXfont *font){
+void textGauge::setFont(const GFXfont *font){
     _font=font;
 }
 
-void Gauge::setCursor(uint16_t x, uint16_t y){
+void textGauge::setCursor(uint16_t x, uint16_t y){
 	_cursor_x=x;
 	_cursor_y=y;
 }
@@ -82,6 +82,17 @@ void Gauge::setDisplay(Adafruit_GFX *display){
 textGauge::textGauge(){
 }
 
+textGauge::textGauge(Adafruit_GFX *display){
+	_x=_y=_w=_h=0;
+	_display=display;
+	_val[0]=0;
+}
+
+textGauge::textGauge(Adafruit_GFX *display, char *val){
+	_x=_y=_w=_h=0;
+	_display=display;
+	strcpy(_val,val); //this will fail for val with more than 255 chars
+}
 integerGauge::integerGauge(){
 }
 
@@ -97,9 +108,24 @@ integerGauge::integerGauge(Adafruit_GFX *display, int val){
 	_val=val;
 }
 
+void textGauge::setValue(char *val){
+    bool __redrawFlag=false;
+    if(!strcmp(val,_val)) __redrawFlag=true;
+    strcpy(_val,val); //this will fail for val with more than 255 chars 
+    if(_autoRedraw==true && __redrawFlag==true) redraw();
+    }
+    
+   void textGauge::setValue(const char *val){
+    bool __redrawFlag=false;
+    if(!strcmp(val,_val)) __redrawFlag=true;
+    strcpy(_val,val); 
+    if(_autoRedraw==true && __redrawFlag==true) redraw();
+    } 
+    
 void integerGauge::setValue(int val){
     bool __redrawFlag=false;
     if(val!=_val) __redrawFlag=true;
+    //Serial.printf("setting value %i, was: %i",val,_val);
     _val=val; 
     if(_autoRedraw==true && __redrawFlag==true) redraw();
     }
@@ -108,8 +134,25 @@ int integerGauge::getValue(){
     return _val;
     }
 
-void integerGauge::setFormatString(String format){
+void textGauge::setFormatString(String format){
    _format=format;
+}
+
+void textGauge::redraw(){
+    _canvas = new GFXcanvas16(_w,_h);
+    _canvas->setCursor(_cursor_x,_cursor_y);
+    _canvas->fillScreen(_bg);
+    _canvas->setTextColor(_fg);
+    _canvas->setFont(_font);
+    if(_format.length()==0){
+	    _canvas->printf("%s",_val);
+	}else{
+	     char __format[_format.length()+1];
+	     _format.toCharArray(__format,_format.length()+1);
+	     _canvas->printf(__format,_val);
+	}
+    pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
+    delete _canvas;
 }
 
 void integerGauge::redraw(){
