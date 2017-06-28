@@ -1,9 +1,9 @@
 /***************************************************
  *                                                 *
  *       Arduino Gauges Library                    *
- *       v. 0.1			                   *
+ *       v. 0.1			                   			*
  *       2017, P. Jakobs                           *
- *				                   *
+ *				                   							*
  ***************************************************/
 
 #ifndef _GAUGESH_
@@ -23,7 +23,7 @@
 #ifdef __AVR__
   #include <avr/pgmspace.h>
 #endif
-
+ 
 class Gauge {
 
 	public:
@@ -40,6 +40,8 @@ class Gauge {
 	      setDisplay(Adafruit_GFX *display),
 	    	setFGColor(uint16_t fg),
 	    	setBGColor(uint16_t bg),
+	    	setBorder(uint8_t border),
+	    	setBorderColor(uint16_t bo),
 	      pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t w, uint16_t h),
 	      //redraw();
 			redraw();
@@ -53,9 +55,11 @@ class Gauge {
   			_w,
   			_h,
   			_fg,
-  			_bg;
+  			_bg,
+  			_bo;
   		uint8_t  
-  			_z;
+  			_z,
+  			_border;
   		Adafruit_GFX 
   			*_display;
 		GFXcanvas16 
@@ -63,10 +67,10 @@ class Gauge {
 		bool 
 			_autoRedraw,
 			_visible;
+			
 };
 
-class textGauge : public Gauge {
-
+class textGauge : public Gauge{
 	public:
 	       textGauge(),
 	       textGauge(Adafruit_GFX *display),

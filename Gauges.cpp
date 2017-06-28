@@ -52,11 +52,11 @@ void Gauge::setSize(uint16_t w, uint16_t h){
 
 void Gauge::setAutoRedraw(bool val){
     _autoRedraw=val;
-    }
+}
 
 void Gauge::setVisible(bool val){
     _visible=val;
-    }
+}
 
 void Gauge::setFGColor(uint16_t fg){
     _fg=fg;
@@ -77,7 +77,15 @@ void textGauge::setCursor(uint16_t x, uint16_t y){
 
 void Gauge::setDisplay(Adafruit_GFX *display){
     _display=display;
-    }
+}
+    
+void Gauge::setBorder(uint8_t border){
+	_border=border;
+}
+
+void Gauge::setBorderColor(uint16_t bo){
+	_bo=bo;
+}
 
 textGauge::textGauge(){
 }
@@ -127,20 +135,19 @@ integerGauge::integerGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16
 	_val=0;
 }
 
-
 void textGauge::setValue(char *val){
     bool __redrawFlag=false;
     if(!strcmp(val,_val)) __redrawFlag=true;
     strcpy(_val,val); //this will fail for val with more than 255 chars 
     if(_autoRedraw==true && __redrawFlag==true) redraw();
-    }
+}
     
    void textGauge::setValue(const char *val){
     bool __redrawFlag=false;
     if(!strcmp(val,_val)) __redrawFlag=true;
     strcpy(_val,val); 
     if(_autoRedraw==true && __redrawFlag==true) redraw();
-    } 
+} 
     
 void integerGauge::setValue(int val){
     bool __redrawFlag=false;
@@ -148,14 +155,14 @@ void integerGauge::setValue(int val){
     //Serial.printf("setting value %i, was: %i",val,_val);
     _val=val; 
     if(_autoRedraw==true && __redrawFlag==true) redraw();
-    }
+}
 
 int integerGauge::getValue(){
     return _val;
-    }
+}
 
 void textGauge::setFormatString(String format){
-   _format=format;
+    _format=format;
 }
 
 void textGauge::redraw(){
@@ -164,43 +171,40 @@ void textGauge::redraw(){
     _canvas->fillScreen(_bg);
     _canvas->setTextColor(_fg);
     _canvas->setFont(_font);
+	 if(_border!=0){
+	 	for(uint8_t __j=0;__j<_border;__j++) {
+	 		_canvas->drawRect(1+__j,__j,_w-2*__j-1,_h-2*__j,_bo);
+	 	}
+	 }    
     if(_format.length()==0){
-	    _canvas->printf("%s",_val);
-	}else{
-	     char __format[_format.length()+1];
-	     _format.toCharArray(__format,_format.length()+1);
-	     _canvas->printf(__format,_val);
-	}
+	 	_canvas->printf("%s",_val);
+	 }else{
+	   char __format[_format.length()+1];
+	   _format.toCharArray(__format,_format.length()+1);
+	   _canvas->printf(__format,_val);
+	 }
     pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
     delete _canvas;
 }
 
 void integerGauge::redraw(){
     _canvas = new GFXcanvas16(_w,_h);
-    //Serial.printf("created Canvas at 0x%x\n", _canvas);
-    //Serial.printf("Canvas has buffer at 0x%x\n", _canvas->getBuffer());
     _canvas->setCursor(_cursor_x,_cursor_y);
-    //Serial.printf("setCursor done\n");
-    //Serial.printf("using display at 0x%x\n", _display);
     _canvas->fillScreen(_bg);
     _canvas->setTextColor(_fg);
     _canvas->setFont(_font);
-    //Serial.printf("painted myCanvas red\n");
+    if(_border!=0){
+	 	for(uint8_t __j=0;__j<_border;__j++) {
+	 		_canvas->drawRect(1+__j,__j,_w-2*__j-1,_h-2*__j,_bo);
+	 	}
+	 }  
     if(_format.length()==0){
 	    _canvas->printf("%i",_val);
-	}else{
+    }else{
 	     char __format[_format.length()+1];
 	     _format.toCharArray(__format,_format.length()+1);
-	     //Serial.printf("using FormatString %s, ",__format);
-	     //Serial.printf(__format,_val);
-	     //Serial.println();
 	     _canvas->printf(__format,_val);
-	}
-    //Serial.printf("printed %i\n",_val);
-    //Serial.printf("coords: (x:%i,y:%i)(w:%i,h:%i)",_x,_y,_w,_h);
+	 }
     pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
-    //_canvas->drawRGBBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
-    //Serial.printf("finished drawing on screen\n");
     delete _canvas;
 }
-
