@@ -70,7 +70,8 @@ class textGauge : public Gauge {
 	public:
 	       textGauge(),
 	       textGauge(Adafruit_GFX *display),
-	       textGauge(Adafruit_GFX *display,char *_val);
+	       textGauge(Adafruit_GFX *display,char *_val),
+	       textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 	       //textGauge(Adafruit_GFX *display,const char _val);
 		void
 	 	    setFont(const GFXfont *font),
@@ -92,9 +93,10 @@ class textGauge : public Gauge {
 class integerGauge : public textGauge {
 
 	public:
-	        integerGauge(),
-	        integerGauge(Adafruit_GFX *display),
-	        integerGauge(Adafruit_GFX *display,int _val);	
+	       integerGauge(),
+	       integerGauge(Adafruit_GFX *display),
+	       integerGauge(Adafruit_GFX *display,int _val),
+	       integerGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h);	
 	   void
 	        setValue(int val),
 	        redraw();

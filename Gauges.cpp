@@ -93,6 +93,16 @@ textGauge::textGauge(Adafruit_GFX *display, char *val){
 	_display=display;
 	strcpy(_val,val); //this will fail for val with more than 255 chars
 }
+
+textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h){
+	_display=display;
+	_x=x;
+	_y=y;
+	_w=w;
+	_h=h;
+	_val[0]=0;
+}
+
 integerGauge::integerGauge(){
 }
 
@@ -107,6 +117,16 @@ integerGauge::integerGauge(Adafruit_GFX *display, int val){
 	_display=display;
 	_val=val;
 }
+
+integerGauge::integerGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h){
+	_display=display;
+	_x=x;
+	_y=y;
+	_w=w;
+	_h=h;
+	_val=0;
+}
+
 
 void textGauge::setValue(char *val){
     bool __redrawFlag=false;
