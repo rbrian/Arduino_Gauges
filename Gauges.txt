@@ -1,0 +1,58 @@
+Struktur:
+
+[display]
+Data:
+	pointer to first screen
+	current screen 
+
+[display]
+Data:
+
+Functions:
+	redraw
+	showScreen(number)
+	showNextScreen
+	showPrevScreen
+	mode(day/night)
+
+[Screen]
+Data:
+	pointer to menu
+	pointer to next screen (or NULL)
+	pointer to previous screen (or NULL)
+	pointer to first gauge
+Functions:
+	redraw
+	show
+	hide	
+[gauge]
+	pointer to previous gauge (or NULL)
+	pointer to next gauge (or NULL)
+	(x,y) coordinates
+	bgColor
+	textColor	
+
+[derivedGauge] // specific Gauges for specific forms of data display and values
+Data:
+	value
+	+ special values such as low/high water marks
+Functions:
+	redraw
+	show
+	hide
+
+[node]
+Data:
+	next
+	prev
+functions:
+	getNext
+	getPrev
+
+[list]
+Data
+	firstNode
+Functions:
+	insertNode
+	removeNode
+	getFirstNode
