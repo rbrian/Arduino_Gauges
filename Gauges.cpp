@@ -193,6 +193,7 @@ void integerGauge::redraw(){
     _canvas->fillScreen(_bg);
     _canvas->setTextColor(_fg);
     _canvas->setFont(_font);
+	Serial.printf("Gauges: Redrawing Integer Gauge, value %i\n", _val);
     if(_border!=0){
 	 	for(uint8_t __j=0;__j<_border;__j++) {
 	 		_canvas->drawRect(1+__j,__j,_w-2*__j-1,_h-2*__j,_bo);
@@ -207,4 +208,56 @@ void integerGauge::redraw(){
 	 }
     pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
     delete _canvas;
+}
+
+clockGauge::clockGauge(){
+}
+
+clockGauge::clockGauge(Adafruit_GFX *display){
+	_x=_y=_w=_h=0;
+	_display=display;
+	_hour=0;
+	_min=0;
+	_second=0;
+}
+
+clockGauge::clockGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h){
+	_display=display;
+	_x=x;
+	_y=y;
+	_w=w;
+	_h=h;
+}
+
+void clockGauge::setValue(uint8_t hour, uint8_t min){
+	bool __redrawFlag;
+	if(hour!=_hour || min!=_min) __redrawFlag=true;
+	_hour=hour;
+	_min=min;
+	if(_autoRedraw==true && __redrawFlag==true) redraw();
+}
+
+void clockGauge::setValue(uint8_t hour, uint8_t min, uint8_t second){
+	bool __redrawFlag;
+	if(hour!=_hour || min!=_min ||second != _second) __redrawFlag=true;
+	_hour=hour;
+	_min=min;
+	_second=second;
+	if(_autoRedraw==true && __redrawFlag==true) redraw();
+}
+
+void clockGauge::redraw(){
+    _canvas = new GFXcanvas16(_w,_h);
+    _canvas->setCursor(_cursor_x,_cursor_y);
+    _canvas->fillScreen(_bg);
+    _canvas->setTextColor(_fg);
+    _canvas->setFont(_font);
+	if(_border!=0){
+	 	for(uint8_t __j=0;__j<_border;__j++) {
+	 		_canvas->drawRect(1+__j,__j,_w-2*__j-1,_h-2*__j,_bo);
+	 	}
+	}
+	_canvas->printf("%2i:%02i", _hour, _min);
+    pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
+	delete _canvas;
 }

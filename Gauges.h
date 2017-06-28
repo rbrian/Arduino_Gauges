@@ -11,7 +11,7 @@
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9340.h>
-#include <LinkedList.h>
+//#include <LinkedList.h>
 
 #if defined(__SAM3X8E__)
 #include <include/pio.h>
@@ -95,20 +95,36 @@ class textGauge : public Gauge{
 };
 
 class integerGauge : public textGauge {
-
 	public:
 	       integerGauge(),
 	       integerGauge(Adafruit_GFX *display),
 	       integerGauge(Adafruit_GFX *display,int _val),
 	       integerGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h);	
 	   void
-	        setValue(int val),
-	        redraw();
+	       setValue(int val),
+	       redraw();
 		int
 	       getValue();
 
 	private:
-		int _val;
+		int
+			_val;
+};
+
+class clockGauge : public textGauge {
+	public:
+	       clockGauge(),
+	       clockGauge(Adafruit_GFX *display),
+	       clockGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h);	
+		void
+	        setValue(uint8_t hour, uint8_t min),
+			setValue(uint8_t hour, uint8_t mmin, uint8_t second),
+	        redraw();
+	private:
+		uint8_t
+			_hour,
+			_min,
+			_second;
 };
 /*
 class stringGauge : public textGauge {
