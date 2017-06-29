@@ -6,7 +6,7 @@ setAutoRedraw	KEYWORD2
 setVisible	KEYWORD2
 setDisplay	KEYWORD2
 setFGColor	KEYWORD2
-KEYWORD2setBGColor	KEYWORD2
+setBGColor	KEYWORD2
 setBorder	KEYWORD2
 setBorderColor	KEYWORD2
 pushBitmap	KEYWORD2
@@ -17,7 +17,6 @@ setFont	KEYWORD2
 setCursor	KEYWORD2
 setFormatString	KEYWORD2
 setValue	KEYWORD2
-setValue	KEYWORD2
 redraw	KEYWORD2
-integerGauge KEYWORD1
+integerGauge	KEYWORD1
 clockGauge	KEYWORD1
