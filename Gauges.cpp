@@ -28,12 +28,12 @@ void Gauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t w, uin
         _c++;
       }
       if(_c>1){
-        _display->drawFastHLine(__x,__y,_c,buffer[_p]);
+        _display->writeFastHLine(__x,__y,_c,buffer[_p]);
         _p+=(_c);
         __x+=(_c-1);
         _c=1;
       }else{
-        _display->drawPixel(__x,__y,buffer[_p++]);
+        _display->writePixel(__x,__y,buffer[_p++]);
       }
     }
   }
@@ -66,15 +66,6 @@ void Gauge::setBGColor(uint16_t bg){
     _bg=bg;
 }
 
-void textGauge::setFont(const GFXfont *font){
-    _font=font;
-}
-
-void textGauge::setCursor(uint16_t x, uint16_t y){
-	_cursor_x=x;
-	_cursor_y=y;
-}
-
 void Gauge::setDisplay(Adafruit_GFX *display){
     _display=display;
 }
@@ -85,6 +76,15 @@ void Gauge::setBorder(uint8_t border){
 
 void Gauge::setBorderColor(uint16_t bo){
 	_bo=bo;
+}
+
+void textGauge::setFont(const GFXfont *font){
+    _font=font;
+}
+
+void textGauge::setCursor(uint16_t x, uint16_t y){
+	_cursor_x=x;
+	_cursor_y=y;
 }
 
 textGauge::textGauge(){
@@ -110,7 +110,10 @@ textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, 
 	_h=h;
 	_val[0]=0;
 }
-
+/*
+numericGauge::numericGauge(int val){
+}
+*/
 integerGauge::integerGauge(){
 }
 
@@ -185,6 +188,7 @@ void textGauge::redraw(){
 	 }
     pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
     delete _canvas;
+    _display->display();
 }
 
 void integerGauge::redraw(){
@@ -208,6 +212,8 @@ void integerGauge::redraw(){
 	 }
     pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
     delete _canvas;
+    Serial.printf("will issue display.display()");
+    _display->display();
 }
 
 clockGauge::clockGauge(){
@@ -260,4 +266,5 @@ void clockGauge::redraw(){
 	_canvas->printf("%2i:%02i", _hour, _min);
     pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
 	delete _canvas;
+	_display->display();
 }
