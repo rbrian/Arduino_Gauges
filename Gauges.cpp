@@ -1,4 +1,12 @@
-#include "Gauges.h"
+#ifndef _GAUGESH_
+	#include "Gauges.h"
+#endif
+
+/*
+ *
+ * Base Gauge class, knows where on what screen it is and has some basic properties.
+ *
+ */
 
 Gauge::Gauge(Adafruit_GFX *display,uint16_t x, uint16_t y, uint16_t w, uint16_t h){
 	_display=display;
@@ -69,13 +77,37 @@ void Gauge::setBGColor(uint16_t bg){
 void Gauge::setDisplay(Adafruit_GFX *display){
     _display=display;
 }
-    
+
 void Gauge::setBorder(uint8_t border){
 	_border=border;
 }
 
 void Gauge::setBorderColor(uint16_t bo){
 	_bo=bo;
+}
+
+/*
+ *
+ * text class, displays different values as text
+ *
+ */
+
+textGauge::textGauge(){
+}
+
+textGauge::textGauge(Adafruit_GFX *display){
+	_x=_y=_w=_h=0;
+	_display=display;
+	_txtval[0]=0;
+}
+
+textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h){
+	_display=display;
+	_x=x;
+	_y=y;
+	_w=w;
+	_h=h;
+	_txtval[0]=0;
 }
 
 void textGauge::setFont(const GFXfont *font){
@@ -87,33 +119,83 @@ void textGauge::setCursor(uint16_t x, uint16_t y){
 	_cursor_y=y;
 }
 
-textGauge::textGauge(){
+void textGauge::setFormatString(String format){
+    _format=format;
 }
 
-textGauge::textGauge(Adafruit_GFX *display){
-	_x=_y=_w=_h=0;
-	_display=display;
-	_val[0]=0;
+void textGauge::redraw(){
+	//Serial.printf("updating Gauge with %s\n",_txtval);
+	_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
+	_canvas->fillScreen(_bg);
+	_canvas->setCursor(_cursor_x,_cursor_y);
+	_canvas->setTextColor(_fg);
+	_canvas->setFont(_font);
+	_canvas->printf("%s",_txtval);
+
+	pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
+	delete _canvas;
+	if(_border!=0){
+		for(uint8_t __j=0;__j<_border;__j++) {
+			_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
+		}
+	}
+	_display->display();
 }
 
-textGauge::textGauge(Adafruit_GFX *display, char *val){
-	_x=_y=_w=_h=0;
-	_display=display;
-	strcpy(_val,val); //this will fail for val with more than 255 chars
+void textGauge::update(char* val){
+	strcpy(_txtval,val);
+	//Serial.printf("update textGauge from char*, input: %s, update: %s\n",val,_txtval);
+	redraw();
+}
+void textGauge::update(const char* val){
+	strcpy(_txtval,val);
+	//Serial.printf("update textGauge from const char*, input: %s, update: %s\n",val,_txtval);
+	redraw();
+}
+void textGauge::update(int val){
+	if(_format.length()==0){
+		sprintf(_txtval,"%i",val);
+	}else{
+		char __format[_format.length()+1];
+		_format.toCharArray(__format,_format.length()+1);
+		sprintf(_txtval,__format,val);
+	}
+	//Serial.printf("update textGauge from int, input: %i, update: %s\n",val,_txtval);
+	redraw();
 }
 
-textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h){
-	_display=display;
-	_x=x;
-	_y=y;
-	_w=w;
-	_h=h;
-	_val[0]=0;
+void textGauge::update(float val){
+	if(_format.length()==0){
+		sprintf(_txtval,"%f",val);
+	}else{
+		char __format[_format.length()+1];
+		_format.toCharArray(__format,_format.length()+1);
+		sprintf(_txtval,__format,val);
+	}
+	//Serial.printf("update textGauge from float, input: %f, update: %s\n",val,_txtval);
+	redraw();
 }
+void textGauge::update(double val){
+	if(_format.length()==0){
+		sprintf(_txtval,"%f",val);
+	}else{
+		char __format[_format.length()+1];
+		_format.toCharArray(__format,_format.length()+1);
+		sprintf(_txtval,__format,val);
+	}
+	//Serial.printf("update textGauge from double, input: %f, update: %s\n",val,_txtval);
+	redraw();
+}
+/* void textGauge::update(time_t val){
+	sprintf(_txtval,"%02i:%02i",val);
+	redraw();
+}*/
+
 /*
-numericGauge::numericGauge(int val){
-}
-*/
+ * integerGauge - holds a basic integer value
+ *
+ */
+
 integerGauge::integerGauge(){
 }
 
@@ -138,82 +220,66 @@ integerGauge::integerGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16
 	_val=0;
 }
 
-void textGauge::setValue(char *val){
-    bool __redrawFlag=false;
-    if(!strcmp(val,_val)) __redrawFlag=true;
-    strcpy(_val,val); //this will fail for val with more than 255 chars 
-    if(_autoRedraw==true && __redrawFlag==true) redraw();
-}
-    
-   void textGauge::setValue(const char *val){
-    bool __redrawFlag=false;
-    if(!strcmp(val,_val)) __redrawFlag=true;
-    strcpy(_val,val); 
-    if(_autoRedraw==true && __redrawFlag==true) redraw();
-} 
-    
 void integerGauge::setValue(int val){
     bool __redrawFlag=false;
     if(val!=_val) __redrawFlag=true;
     //Serial.printf("setting value %i, was: %i",val,_val);
-    _val=val; 
-    if(_autoRedraw==true && __redrawFlag==true) redraw();
+    _val=val;
+    if(_autoRedraw==true && __redrawFlag==true) update(_val);
 }
 
 int integerGauge::getValue(){
     return _val;
 }
 
-void textGauge::setFormatString(String format){
-    _format=format;
+/*
+ * stringGauge - holds a c string
+ *
+ */
+
+stringGauge::stringGauge(){
 }
 
-void textGauge::redraw(){
-    _canvas = new GFXcanvas16(_w,_h);
-    _canvas->setCursor(_cursor_x,_cursor_y);
-    _canvas->fillScreen(_bg);
-    _canvas->setTextColor(_fg);
-    _canvas->setFont(_font);
-	 if(_border!=0){
-	 	for(uint8_t __j=0;__j<_border;__j++) {
-	 		_canvas->drawRect(1+__j,__j,_w-2*__j-1,_h-2*__j,_bo);
-	 	}
-	 }    
-    if(_format.length()==0){
-	 	_canvas->printf("%s",_val);
-	 }else{
-	   char __format[_format.length()+1];
-	   _format.toCharArray(__format,_format.length()+1);
-	   _canvas->printf(__format,_val);
-	 }
-    pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
-    delete _canvas;
-    _display->display();
+stringGauge::stringGauge(Adafruit_GFX *display){
+	_x=_y=_w=_h=0;
+	_display=display;
+	_val[0]=0;
 }
 
-void integerGauge::redraw(){
-    _canvas = new GFXcanvas16(_w,_h);
-    _canvas->setCursor(_cursor_x,_cursor_y);
-    _canvas->fillScreen(_bg);
-    _canvas->setTextColor(_fg);
-    _canvas->setFont(_font);
-	Serial.printf("Gauges: Redrawing Integer Gauge, value %i\n", _val);
-    if(_border!=0){
-	 	for(uint8_t __j=0;__j<_border;__j++) {
-	 		_canvas->drawRect(1+__j,__j,_w-2*__j-1,_h-2*__j,_bo);
-	 	}
-	 }  
-    if(_format.length()==0){
-	    _canvas->printf("%i",_val);
-    }else{
-	     char __format[_format.length()+1];
-	     _format.toCharArray(__format,_format.length()+1);
-	     _canvas->printf(__format,_val);
-	 }
-    pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
-    delete _canvas;
-    Serial.printf("will issue display.display()");
-    _display->display();
+stringGauge::stringGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h){
+	_display=display;
+	_x=x;
+	_y=y;
+	_w=w;
+	_h=h;
+	_val[0]=0;
+}
+
+void stringGauge::setValue(char *val){
+	bool __redrawFlag=false;
+	if(strcmp(val,_val)!=0) __redrawFlag=true;
+	strcpy(_val,val);
+	if(_autoRedraw==true && __redrawFlag==true) update(_val);
+}
+
+void stringGauge::setValue(const char *val){
+    bool __redrawFlag=false;
+		if(strcmp(val,_val)!=0) __redrawFlag=true;
+		strcpy(_val,val);
+		if(_autoRedraw==true && __redrawFlag==true) update(_val);
+}
+
+void stringGauge::setValue(String val){
+    bool __redrawFlag=false;
+		char __val[val.length()+1];
+		val.toCharArray(__val,val.length()+1);
+    if(strcmp(__val,_val)!=0) __redrawFlag=true;
+    strcpy(_val,__val);
+		if(_autoRedraw==true && __redrawFlag==true) update(_val);
+}
+
+char* stringGauge::getValue(){
+    return _val;
 }
 
 clockGauge::clockGauge(){
@@ -251,20 +317,18 @@ void clockGauge::setValue(uint8_t hour, uint8_t min, uint8_t second){
 	_second=second;
 	if(_autoRedraw==true && __redrawFlag==true) redraw();
 }
-
-void clockGauge::redraw(){
-    _canvas = new GFXcanvas16(_w,_h);
-    _canvas->setCursor(_cursor_x,_cursor_y);
-    _canvas->fillScreen(_bg);
-    _canvas->setTextColor(_fg);
-    _canvas->setFont(_font);
-	if(_border!=0){
-	 	for(uint8_t __j=0;__j<_border;__j++) {
-	 		_canvas->drawRect(1+__j,__j,_w-2*__j-1,_h-2*__j,_bo);
-	 	}
-	}
-	_canvas->printf("%2i:%02i", _hour, _min);
-    pushBitmap(_x,_y,_canvas->getBuffer(),_w,_h);
-	delete _canvas;
-	_display->display();
+/*
+void textGauge::setValue(char *valtextGauge::update
+    bool __redrawFlag=false;
+    if(!strcmp(val,_val)) __redrawFlag=true;
+    strcpy(_val,val); //this will fail for val with more than 255 chars
+    if(_autoRedraw==true && __redrawFlag==true) redraw();
 }
+
+void textGauge::setValue(const char *val){
+    bool __redrawFlag=false;
+    if(!strcmp(val,_val)) __redrawFlag=true;
+    strcpy(_val,val);
+    if(_autoRedraw==true && __redrawFlag==true) redraw();
+}
+*/
