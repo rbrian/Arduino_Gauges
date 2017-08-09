@@ -1,3 +1,11 @@
+This all came out a little different than planned.
+
+first of all, the more code I write, the more this clearly looks like something that should use templates.
+I keep creating classes for combinations of datatype and visualizations, which wasn't the intention. In fact, it would be far superior to just have a "numbericalGauge" that displays a number and a "tapeGauge" that shows a tape - whatever number format it's being fed....
+
+
+
+
 Struktur:
 
 [display]
