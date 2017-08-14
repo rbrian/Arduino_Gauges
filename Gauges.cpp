@@ -116,7 +116,6 @@ void displayGauge::setSize(uint16_t w, uint16_t h){
 	_h=h;
 }
 
-
 void displayGauge::setVisible(bool val){
     _visible=val;
 }
@@ -215,13 +214,8 @@ void textGauge::redraw(){
 		_position_x=_border+_gutter_l;
 	}
 
-	//_canvas->drawRect(_position_x,_position_y,_bounds_w,_bounds_h,0xFFE0);
-	//_canvas->drawFastHLine(_position_x,_position_y,8,0xF800);
-	//_canvas->drawFastVLine(_position_x,_position_y,8,0xF800);
 	_canvas->setCursor(_position_x-_bounds_x1,_position_y-_bounds_y1);
-
 	_canvas->print(_buf);
-	//Serial.printf("wrote %s \n",_buf);
 
 	pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
 	delete _canvas;

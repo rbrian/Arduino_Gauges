@@ -54,8 +54,8 @@ class Gauge{
       setValue(char* val),
       setValue(const char* val),
       setValue(String val),
-      setAutoRedraw(bool val),
-      redraw();
+      setAutoRedraw(bool val);
+    virtual void redraw();
   protected:
     String
       _val;
