@@ -146,6 +146,15 @@ void displayGauge::setGutter(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t
 	_gutter_t=gutter_t;
 	_gutter_b=gutter_b;
 }
+
+void displayGauge::setGutter(uint8_t gutter){
+	setGutter(gutter,gutter,gutter,gutter);
+}
+
+void displayGauge::setMargins(uint8_t gutter){
+	setGutter(gutter,gutter,gutter,gutter);
+}
+
 void displayGauge::setMargins(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b){
 	setGutter(gutter_l,gutter_r,gutter_t,gutter_b);
 }
@@ -284,7 +293,7 @@ tapeGauge::tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, 
 
 void tapeGauge::setMinMax(float minimum, float maximum){
 	//Serial.printf("maxmin: min: %i, max: %i\n",minimum, maximum);
-	Serial.printf("maxmin: min: %f, max: %f\n",minimum, maximum);
+	//Serial.printf("maxmin: min: %f, max: %f\n",minimum, maximum);
 	if(minimum<=maximum){
 		_min=minimum;
 		_max=maximum;
@@ -293,17 +302,7 @@ void tapeGauge::setMinMax(float minimum, float maximum){
 		_max=minimum;
 	}
 }
-/*
-void tapeGauge::setMinMax(uint16_t min, uint16_t max){
-	if(min<max){
-		_min=(float)min;
-		_max=(float)max;
-	}else{
-		_min=(float)max;
-		_max=(float)min;
-	}
-}
-*/
+
 void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2){
 	if(limit0>_min && limit0<_max){
 		_limit0=limit0;
@@ -320,23 +319,6 @@ void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float l
 	}
 }
 
-/*
-void tapeGauge::setColors(uint16_t color0,uint16_t limit0, uint16_t color1, uint16_t limit1, uint16_t color2){
-	if(limit0>_min && limit0<_max){
-		_limit0=(float)limit0;
-		_color0=color0;
-		_color1=color1;
-
-		if (limit1>limit0 && limit1<_max) {
-			_limit1=(float)limit1;
-			_color2=color2;
-		}
-	}else{
-		_color0=_color1=_color2=_fg;
-		_limit0=_limit1=_min;
-	}
-}
-*/
 void tapeGauge::setDirection(uint8_t direction){
 	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_BOTTOMUP)?_direction=direction:_direction=TAPE_LEFTRIGHT;
 }
@@ -350,32 +332,50 @@ void tapeGauge::redraw(){
 	uint16_t _tape_w=_w-2*_border-_gutter_l-_gutter_r;
 	uint16_t _tape_h=_h-2*_border-_gutter_t-_gutter_b;
 	uint16_t _tape_length, _tapeLimit0, _tapeLimit1;
-	_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
-	_canvas->fillScreen(_bg);
+
 	float __val;
 	if(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT){
 		__val=_val.toFloat();
 		_tape_length=(uint16_t)(__val*_tape_w/(_max-_min));
-		(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_w/(_max-_min)):_tapeLimit0=0;
-		(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_w/(_max-_min)):_tapeLimit1=0;
-		if(_tapeLimit1>0) {
-			_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
-			_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
-		 	_canvas->fillRect(_gutter_l+_tapeLimit1,_gutter_t, _tape_length-_tapeLimit1,_tape_h,_color2);
-		}else if(_tapeLimit0>0){
-			_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
-			_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tape_length-_tapeLimit0,_tape_h,_color1);
-		}else{
-			_canvas->fillRect(_gutter_l,_gutter_t, _tape_length,_tape_h,_color0);
+		if(_tape_length!=__tape_length){
+			_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
+			_canvas->fillScreen(_bg);
+			(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_w/(_max-_min)):_tapeLimit0=0;
+			(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_w/(_max-_min)):_tapeLimit1=0;
+			if(_direction=TAPE_LEFTRIGHT){
+				if(_tapeLimit1>0) {
+					_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
+					_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
+				 	_canvas->fillRect(_gutter_l+_tapeLimit1,_gutter_t, _tape_length-_tapeLimit1,_tape_h,_color2);
+				}else if(_tapeLimit0>0){
+					_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
+					_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tape_length-_tapeLimit0,_tape_h,_color1);
+				}else{
+					_canvas->fillRect(_gutter_l,_gutter_t, _tape_length,_tape_h,_color0);
+				}
+			}else{
+				if(_tapeLimit1>0) {
+					_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
+					_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
+				 	_canvas->fillRect(_gutter_l+_tapeLimit1,_gutter_t, _tape_length-_tapeLimit1,_tape_h,_color2);
+				}else if(_tapeLimit0>0){
+					_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
+					_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tape_length-_tapeLimit0,_tape_h,_color1);
+				}else{
+					_canvas->fillRect(_gutter_l,_gutter_t, _tape_length,_tape_h,_color0);
+				}
+			}
+			//Serial.printf("data: value: %f, tape_length: %i\n min: %f, max: %f \nlimit0: %f, limit1: %f\ntape_limit0: %i, tape_limit1: %i\n\n",__val, _tape_length, _min,_max,_limit0,_limit1,_tapeLimit0,_tapeLimit1);
+
+			__tape_length=_tape_length; //store current length so we don't have to re-draw on no visible change
+			pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
+			delete _canvas;
+			if(_border!=0){
+				for(uint8_t __j=0;__j<_border;__j++) {
+					_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
+				}
+			}
+			_display->display();
 		}
-		Serial.printf("data: value: %f, tape_length: %i\n min: %f, max: %f \nlimit0: %f, limit1: %f\ntape_limit0: %i, tape_limit1: %i\n\n",__val, _tape_length, _min,_max,_limit0,_limit1,_tapeLimit0,_tapeLimit1);
 	}
-	pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
-	delete _canvas;
-	if(_border!=0){
-		for(uint8_t __j=0;__j<_border;__j++) {
-			_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
-		}
-	}
-	_display->display();
 }

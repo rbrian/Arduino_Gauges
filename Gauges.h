@@ -95,7 +95,9 @@ void
   setBorder(uint8_t border),
   setBorderColor(uint16_t bo),
   setGutter(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b),
+  setGutter(uint8_t gutter),
   setMargins(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b),
+  setMargins(uint8_t gutter),
   pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t w, uint16_t h);
 uint8_t
   getDepth();
@@ -161,5 +163,7 @@ protected:
   float
     _min, _max,
     _limit0,_limit1;
+  private:
+    uint16_t __tape_length;
 };
 #endif
