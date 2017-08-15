@@ -31,12 +31,27 @@
   #define _MAX_STR_LEN 63
 #endif
 
-#define TOP     1
-#define MIDDLE  2
-#define BOTTOM  3
-#define LEFT    1
-#define CENTER  2
-#define RIGHT   3
+/*
+ * Text positioning values
+ * Vertical (TEXT_TOP,TEXT_MIDDLE,TEXT_BOTTOM)
+ * Horizontal (TEXT_LEFT, TEXT_CENTER, TEXT_RIGHT)
+ * TEXT_CENTER and TEXT_MIDDLE are synonymous and work for both
+ */
+#define TEXT_TOP     1
+#define TEXT_MIDDLE  0
+#define TEXT_BOTTOM  2
+#define TEXT_LEFT    1
+#define TEXT_CENTER  0
+#define TEXT_RIGHT   2
+
+/*
+ * Tape direction values
+ */
+#define TAPE_LEFTRIGHT  0
+#define TAPE_TOPDOWN    1
+#define TAPE_RIGHTLEFT  2
+#define TAPE_BOTTOMUP   3
+
 
 /*
  * Gauge baseclass
@@ -79,6 +94,8 @@ void
   setBGColor(uint16_t bg),
   setBorder(uint8_t border),
   setBorderColor(uint16_t bo),
+  setGutter(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b),
+  setMargins(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b),
   pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t w, uint16_t h);
 uint8_t
   getDepth();
@@ -90,10 +107,7 @@ protected:
     uint8_t
       _z,
       _border,
-      _gutter_l,
-      _gutter_r,
-      _gutter_t,
-      _gutter_b;
+      _gutter_l, _gutter_r, _gutter_t, _gutter_b;
     Adafruit_GFX
       *_display;
     GFXcanvas16
@@ -112,7 +126,6 @@ class textGauge : public displayGauge {
       setCursor(uint16_t x, uint16_t y),
       setVAlign(uint8_t align),
       setHAlign(uint8_t align),
-      setGutter(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b),
       redraw();
 	protected:
     uint16_t
@@ -124,4 +137,29 @@ class textGauge : public displayGauge {
   	const GFXfont *_font;
 };
 
+class tapeGauge : public displayGauge {
+public:
+    tapeGauge(),
+    tapeGauge(Adafruit_GFX *display),
+    tapeGauge(Adafruit_GFX *display, uint8_t direction),
+    tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h),
+    tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint8_t direction);
+  void
+    //setMinMax(int min, int max),
+    setMinMax(float min, float max),
+    //setColors(uint16_t color0,uint16_t limit0, uint16_t color1, uint16_t limit1, uint16_t color2),
+    setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2),
+    setDirection(uint8_t dir),
+    setTicks(uint16_t major, uint16_t minor),
+    redraw();
+protected:
+  uint16_t
+    _color0,_color1,_color2,
+    _tickMajor, _tickMinor;
+  uint8_t
+    _direction;
+  float
+    _min, _max,
+    _limit0,_limit1;
+};
 #endif

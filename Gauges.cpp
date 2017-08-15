@@ -140,6 +140,16 @@ void displayGauge::setBorderColor(uint16_t bo){
 	_bo=bo;
 }
 
+void displayGauge::setGutter(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b){
+	_gutter_l=gutter_l;
+	_gutter_r=gutter_r;
+	_gutter_t=gutter_t;
+	_gutter_b=gutter_b;
+}
+void displayGauge::setMargins(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b){
+	setGutter(gutter_l,gutter_r,gutter_t,gutter_b);
+}
+
 /*
  *
  * text class, displays different values as text
@@ -147,6 +157,8 @@ void displayGauge::setBorderColor(uint16_t bo){
  */
 
 textGauge::textGauge(){
+	_x=_y=_w=_h=0;
+	_display=0;
 }
 
 textGauge::textGauge(Adafruit_GFX *display){
@@ -178,13 +190,6 @@ void textGauge::setCursor(uint16_t x, uint16_t y){
 	_cursor_y=y;
 }
 
-void textGauge::setGutter(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b){
-	_gutter_l=gutter_l;
-	_gutter_r=gutter_r;
-	_gutter_t=gutter_t;
-	_gutter_b=gutter_b;
-}
-
 void textGauge::redraw(){
 	//Serial.printf("updating Gauge with %s\n",_txtval);
 	char _buf[_val.length()+2];
@@ -198,25 +203,173 @@ void textGauge::redraw(){
 	_val.toCharArray(_buf,_val.length()+1);
 	_canvas->getTextBounds(_buf, 0, 0, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
 
-	if(_valign==MIDDLE){
+	if(_valign==TEXT_MIDDLE){
 		_position_y=(_h-_bounds_h-_border)>>1;
-	}else if(_valign==BOTTOM){
+	}else if(_valign==TEXT_BOTTOM){
 		_position_y=_h-(_bounds_h+_gutter_t+2*_border);
-	}else if(_valign==TOP){
+	}else if(_valign==TEXT_TOP){
 		_position_y=_border+_gutter_b;
 	}
 
-	if(_halign==CENTER){
+	if(_halign==TEXT_CENTER){
 		_position_x=(_w-_bounds_w-_border)>>1;
-	}else if(_halign==RIGHT){
+	}else if(_halign==TEXT_RIGHT){
 		_position_x=_w-_border*2-_bounds_w-_gutter_r;
-	}else if(_halign==LEFT){
+	}else if(_halign==TEXT_LEFT){
 		_position_x=_border+_gutter_l;
 	}
 
 	_canvas->setCursor(_position_x-_bounds_x1,_position_y-_bounds_y1);
 	_canvas->print(_buf);
 
+	pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
+	delete _canvas;
+	if(_border!=0){
+		for(uint8_t __j=0;__j<_border;__j++) {
+			_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
+		}
+	}
+	_display->display();
+}
+
+/*
+ * tapeGauge, displays a tape (or bar) corresponding to the numeric
+ * value of _val. Can be configured to have up to three color areas
+ * (using the setColors method)
+ */
+tapeGauge::tapeGauge(){
+	_x=_y=_w=_h=0;
+	_display=0;
+	_direction=TAPE_LEFTRIGHT;
+	_color0=_color1=_color2=_fg;
+	_limit0=_limit1=_min;
+}
+
+tapeGauge::tapeGauge(Adafruit_GFX *display){
+	_x=_y=_w=_h=0;
+	_display=display;
+	_direction=TAPE_LEFTRIGHT;
+	_color0=_color1=_color2=_fg;
+	_limit0=_limit1=_min;
+}
+
+tapeGauge::tapeGauge(Adafruit_GFX *display,uint8_t direction){
+	_x=_y=_w=_h=0;
+	_display=display;
+	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_BOTTOMUP)?_direction=direction:_direction=TAPE_LEFTRIGHT;
+	_color0=_color1=_color2=_fg;
+	_limit0=_limit1=_min;
+}
+
+tapeGauge::tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h){
+	_display=display;
+	_x=x;
+	_y=y;
+	_w=w;
+	_h=h;
+	_color0=_color1=_color2=_fg;
+	_limit0=_limit1=_min;
+}
+
+tapeGauge::tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t direction){
+	_display=display;
+	_x=x;
+	_y=y;
+	_w=w;
+	_h=h;
+	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_BOTTOMUP)?_direction=direction:_direction=TAPE_LEFTRIGHT;
+	_color0=_color1=_color2=_fg;
+	_limit0=_limit1=_min;
+}
+
+void tapeGauge::setMinMax(float minimum, float maximum){
+	//Serial.printf("maxmin: min: %i, max: %i\n",minimum, maximum);
+	Serial.printf("maxmin: min: %f, max: %f\n",minimum, maximum);
+	if(minimum<=maximum){
+		_min=minimum;
+		_max=maximum;
+	}else{
+		_min=maximum;
+		_max=minimum;
+	}
+}
+/*
+void tapeGauge::setMinMax(uint16_t min, uint16_t max){
+	if(min<max){
+		_min=(float)min;
+		_max=(float)max;
+	}else{
+		_min=(float)max;
+		_max=(float)min;
+	}
+}
+*/
+void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2){
+	if(limit0>_min && limit0<_max){
+		_limit0=limit0;
+		_color0=color0;
+		_color1=color1;
+
+		if (limit1>limit0 && limit1<_max) {
+			_limit1=limit1;
+			_color2=color2;
+		}
+	}else{
+		_color0=_color1=_color2=_fg;
+		_limit0=_limit1=_min;
+	}
+}
+
+/*
+void tapeGauge::setColors(uint16_t color0,uint16_t limit0, uint16_t color1, uint16_t limit1, uint16_t color2){
+	if(limit0>_min && limit0<_max){
+		_limit0=(float)limit0;
+		_color0=color0;
+		_color1=color1;
+
+		if (limit1>limit0 && limit1<_max) {
+			_limit1=(float)limit1;
+			_color2=color2;
+		}
+	}else{
+		_color0=_color1=_color2=_fg;
+		_limit0=_limit1=_min;
+	}
+}
+*/
+void tapeGauge::setDirection(uint8_t direction){
+	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_BOTTOMUP)?_direction=direction:_direction=TAPE_LEFTRIGHT;
+}
+
+void tapeGauge::setTicks(uint16_t major, uint16_t minor){
+	_tickMajor=major;
+	_tickMinor=minor;
+}
+
+void tapeGauge::redraw(){
+	uint16_t _tape_w=_w-2*_border-_gutter_l-_gutter_r;
+	uint16_t _tape_h=_h-2*_border-_gutter_t-_gutter_b;
+	uint16_t _tape_length, _tapeLimit0, _tapeLimit1;
+	_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
+	_canvas->fillScreen(_bg);
+	float __val;
+	if(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT){
+		__val=_val.toFloat();
+		_tape_length=(uint16_t)(__val*_tape_w/(_max-_min));
+		(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_w/(_max-_min)):_tapeLimit0=0;
+		(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_w/(_max-_min)):_tapeLimit1=0;
+		if(_tapeLimit1>0) {
+			_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
+			_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
+		 	_canvas->fillRect(_gutter_l+_tapeLimit1,_gutter_t, _tape_length-_tapeLimit1,_tape_h,_color2);
+		}else if(_tapeLimit0>0){
+			_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
+			_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tape_length-_tapeLimit0,_tape_h,_color1);
+		}else{
+			_canvas->fillRect(_gutter_l,_gutter_t, _tape_length,_tape_h,_color0);
+		}
+		Serial.printf("data: value: %f, tape_length: %i\n min: %f, max: %f \nlimit0: %f, limit1: %f\ntape_limit0: %i, tape_limit1: %i\n\n",__val, _tape_length, _min,_max,_limit0,_limit1,_tapeLimit0,_tapeLimit1);
+	}
 	pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
 	delete _canvas;
 	if(_border!=0){
