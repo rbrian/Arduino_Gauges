@@ -36,3 +36,15 @@ The **tapeGauge** allows for vertical or horizontal Tapes to be displayed. Those
 * **setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2), setColors(uint16_t color0,float limit0, uint16_t), setColors(uint16_t color0)** set the coloring scheme. Five parameters define thre colored segments, three parameters define two segments and a single color means the whole bar has just that color.
 * **setDirection(uint8_t dir)** sets the direction (or orientation) of the tape. dir is one of **TAPE_LEFTRIGHT, TAPE_TOPDOWN, TAPE_RIGHTLEFT, TAPE_BOTTOMUP** 
 * **setTicks(uint16_t major, uint16_t minor)** (not yet implemented) draw minor and major ticks along the cardinal axis
+
+**Beware:**
+due to memory requirements, this will currently only work on platforms that have enough free memory available. This library uses Adafruit_Gfx::canvas16 to avoid on screen flicker when refreshing parts of the display. A canvas needs w\*h\*2 bytes of memory. For a 40x200px canvas, that's almost 16kB! That buffer is only held for a very short time (during the redraw() function call) but if it cannot be fully allocated, the display will probably show gabled information.
+
+**dependecies**
+I have tested this library with the following Adafruit display classes:
+* Adafruit_ILI9340.h
+* Adafruit_ILI9341.h
+* Adafruit_SSD1306.h
+* Adafruit_ST7735.h
+
+The OLED displays require an additional call to actually update the display (display.display()). Since the Gauges use a reference to the Adafruit_Gfx baseclass and that does not know this function, I had to update this as well. So, to use the gauges, download Adafruit_Gfx from here: https://github.com/pljakobs/Adafruit-GFX-Library
