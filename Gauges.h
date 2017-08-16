@@ -147,9 +147,7 @@ public:
     tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h),
     tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h,uint8_t direction);
   void
-    //setMinMax(int min, int max),
     setMinMax(float min, float max),
-    //setColors(uint16_t color0,uint16_t limit0, uint16_t color1, uint16_t limit1, uint16_t color2),
     setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2),
     setDirection(uint8_t dir),
     setTicks(uint16_t major, uint16_t minor),
