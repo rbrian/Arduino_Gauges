@@ -334,15 +334,15 @@ void tapeGauge::redraw(){
 	uint16_t _tape_length, _tapeLimit0, _tapeLimit1;
 
 	float __val;
-	if(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT){
-		__val=_val.toFloat();
-		_tape_length=(uint16_t)(__val*_tape_w/(_max-_min));
-		if(_tape_length!=__tape_length){
-			_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
-			_canvas->fillScreen(_bg);
+	__val=_val.toFloat();
+	(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT)?_tape_length=(uint16_t)(__val*_tape_w/(_max-_min)):_tape_length=(uint16_t)(__val*_tape_h/(_max-_min));
+	if(_tape_length!=__tape_length){
+		_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
+		_canvas->fillScreen(_bg);
+		if(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT){
 			(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_w/(_max-_min)):_tapeLimit0=0;
 			(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_w/(_max-_min)):_tapeLimit1=0;
-			if(_direction=TAPE_LEFTRIGHT){
+			if(_direction==TAPE_LEFTRIGHT){
 				if(_tapeLimit1>0) {
 					_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
 					_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
@@ -355,27 +355,55 @@ void tapeGauge::redraw(){
 				}
 			}else{
 				if(_tapeLimit1>0) {
-					_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
-					_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
-				 	_canvas->fillRect(_gutter_l+_tapeLimit1,_gutter_t, _tape_length-_tapeLimit1,_tape_h,_color2);
+					_canvas->fillRect(_w-(_gutter_r+_tapeLimit0+_border),_gutter_t, _tapeLimit0,_tape_h,_color0);
+					_canvas->fillRect(_w-(_gutter_r+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
+				 	_canvas->fillRect(_w-(_gutter_r+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_gutter_t, _tape_length-_tapeLimit1,_tape_h,_color2);
 				}else if(_tapeLimit0>0){
-					_canvas->fillRect(_gutter_l,_gutter_t, _tapeLimit0,_tape_h,_color0);
-					_canvas->fillRect(_gutter_l+_tapeLimit0,_gutter_t, _tape_length-_tapeLimit0,_tape_h,_color1);
+					_canvas->fillRect(_w-(_gutter_r+_border)-_tapeLimit0,_gutter_t, _tapeLimit0,_tape_h,_color0);
+					_canvas->fillRect(_w-(_gutter_r+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_gutter_t, _tape_length-_tapeLimit0,_tape_h,_color1);
 				}else{
-					_canvas->fillRect(_gutter_l,_gutter_t, _tape_length,_tape_h,_color0);
+					_canvas->fillRect(_w-(_gutter_r+_tape_length+_border),_gutter_t, _tape_length,_tape_h,_color0);
 				}
 			}
-			//Serial.printf("data: value: %f, tape_length: %i\n min: %f, max: %f \nlimit0: %f, limit1: %f\ntape_limit0: %i, tape_limit1: %i\n\n",__val, _tape_length, _min,_max,_limit0,_limit1,_tapeLimit0,_tapeLimit1);
-
-			__tape_length=_tape_length; //store current length so we don't have to re-draw on no visible change
-			pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
-			delete _canvas;
-			if(_border!=0){
-				for(uint8_t __j=0;__j<_border;__j++) {
-					_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
+		}else{
+			(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_h/(_max-_min)):_tapeLimit0=0;
+			(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_h/(_max-_min)):_tapeLimit1=0;
+			if(_direction==TAPE_TOPDOWN){
+				if(_tapeLimit1>0) {
+					_canvas->fillRect(_gutter_l,_gutter_t, _tape_w,_tapeLimit0,_color0);
+					_canvas->fillRect(_gutter_l,_gutter_t+_tapeLimit0, _tape_w,_tapeLimit1-_tapeLimit0,_color1);
+				 	_canvas->fillRect(_gutter_l,_gutter_t+_tapeLimit1, _tape_w,_tape_length-_tapeLimit1,_color2);
+				}else if(_tapeLimit0>0){
+					_canvas->fillRect(_gutter_l,_gutter_t,_tape_w, _tapeLimit0,_color0);
+					_canvas->fillRect(_gutter_l,_gutter_t+_tapeLimit0, _tape_w,_tape_length-_tapeLimit0,_color1);
+				}else{
+					_canvas->fillRect(_gutter_l,_gutter_t,_tape_w, _tape_length,_color0);
+				}
+			}else{
+				if(_tapeLimit1>0) {
+					_canvas->fillRect(_w-(_gutter_r+_tapeLimit0+_border),_gutter_t, _tapeLimit0,_tape_h,_color0);
+					_canvas->fillRect(_w-(_gutter_r+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
+				 	_canvas->fillRect(_w-(_gutter_r+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_gutter_t, _tape_length-_tapeLimit1,_tape_h,_color2);
+				}else if(_tapeLimit0>0){
+					_canvas->fillRect(_w-(_gutter_r+_border)-_tapeLimit0,_gutter_t, _tapeLimit0,_tape_h,_color0);
+					_canvas->fillRect(_w-(_gutter_r+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_gutter_t, _tape_length-_tapeLimit0,_tape_h,_color1);
+				}else{
+					_canvas->fillRect(_w-(_gutter_r+_tape_length+_border),_gutter_t, _tape_length,_tape_h,_color0);
 				}
 			}
-			_display->display();
 		}
+
+		//Serial.printf("data: value: %f, tape_length: %i\n min: %f, max: %f \nlimit0: %f, limit1: %f\ntape_limit0: %i, tape_limit1: %i\n\n",__val, _tape_length, _min,_max,_limit0,_limit1,_tapeLimit0,_tapeLimit1);
+
+		__tape_length=_tape_length; //store current length so we don't have to re-draw on no visible change
+		pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
+		delete _canvas;
+		if(_border!=0){
+			for(uint8_t __j=0;__j<_border;__j++) {
+				_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
+			}
+		}
+		_display->drawRect(_x+_border+1,_y+_border,_w-2*_border-1,_h-2*_border,0xff00);
+		_display->display();
 	}
 }
