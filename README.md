@@ -1,7 +1,7 @@
 # Arduino_Gauges
 A set of gauges to work with Adafruit_GFX
 
-![screenshot](Arduino_Gauges/Gauges.jpeg)
+![screenshot](https://github.com/pljakobs/Arduino_Gauges/blob/master/Gauges.jpeg?raw=true)
 
 The current implementation can show text and numbers on defined parts of an Adafruit_gfx screen without having to redraw the whole screen. It can even drive multiple screens (provided the underlying hard- and software supports it) and move Gauges from one screen to another.
 The base **Gauge** class, that all others inherit from, contains the relevant functions to put it on screen and configure it's basic behaviour:
