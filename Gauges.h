@@ -19,17 +19,27 @@
   #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
   #define pgm_read_word(addr) (*(const unsigned short *)(addr))
   typedef unsigned char prog_uchar;
-  #define _MAX_STR_LEN 255
-#endif
+  #endif
 
 #ifdef __AVR__
   #include <avr/pgmspace.h>
-  #define _MAX_STR_LEN 63
+  #define _CONSERVE_RAM_
 #endif
 
-#ifndef _MAX_STR_LEN
-  #define _MAX_STR_LEN 63
-#endif
+/*
+ * This library isses Adafruit_GFX canvas16, which are basically off screen bitmaps,
+ * to avoid flickering redraws.
+ * Canvases require quite a bit of available RAM (for a simple 40x80 pixel Gauge, that
+ * would be 40x80x2 Bytes= 4,8kB).
+ * That's not an issue on 32 bit platforms like ARM or ESP8266, but, traditional
+ * AVR based Arduinos will not work.
+ * I'll include a _CONSERVE_RAM_ setting that will draw the gauges without using a
+ * canvas. This should use less memory and also be a bit faster, but it will lead to flickering
+ * redraws which may or may not be tolerable
+ *
+ */
+
+#define _CONSERVE_RAM_
 
 /*
  * Text positioning values
@@ -149,6 +159,8 @@ public:
   void
     setMinMax(float min, float max),
     setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2),
+    setColors(uint16_t color0,float limit0, uint16_t),
+    setColors(uint16_t color0),
     setDirection(uint8_t dir),
     setTicks(uint16_t major, uint16_t minor),
     redraw();

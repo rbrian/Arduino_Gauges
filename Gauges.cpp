@@ -205,39 +205,50 @@ void textGauge::redraw(){
 	int16_t  _bounds_x1, _bounds_y1;
 	uint16_t _bounds_w, _bounds_h,
 					 _position_x, _position_y;
-	_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
-	_canvas->fillScreen(_bg);
-	_canvas->setTextColor(_fg);
-	_canvas->setFont(_font);
+
 	_val.toCharArray(_buf,_val.length()+1);
-	_canvas->getTextBounds(_buf, 0, 0, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
+	#ifdef _CONSERVE_RAM_
+		_display->setTextColor(_fg);
+		_display->setFont(_font);
+		_display->getTextBounds(_buf, _x+_border, _y+_border, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
+	#else
+		_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
+		_canvas->fillScreen(_bg);
+		_canvas->setTextColor(_fg);
+		_canvas->setFont(_font);
+		_canvas->getTextBounds(_buf, 0, 0, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
+	#endif
 
-	if(_valign==TEXT_MIDDLE){
-		_position_y=(_h-_bounds_h-_border)>>1;
-	}else if(_valign==TEXT_BOTTOM){
-		_position_y=_h-(_bounds_h+_gutter_t+2*_border);
-	}else if(_valign==TEXT_TOP){
-		_position_y=_border+_gutter_b;
-	}
-
-	if(_halign==TEXT_CENTER){
-		_position_x=(_w-_bounds_w-_border)>>1;
-	}else if(_halign==TEXT_RIGHT){
-		_position_x=_w-_border*2-_bounds_w-_gutter_r;
-	}else if(_halign==TEXT_LEFT){
-		_position_x=_border+_gutter_l;
-	}
-
-	_canvas->setCursor(_position_x-_bounds_x1,_position_y-_bounds_y1);
-	_canvas->print(_buf);
-
-	pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
-	delete _canvas;
-	if(_border!=0){
-		for(uint8_t __j=0;__j<_border;__j++) {
-			_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
+		if(_valign==TEXT_MIDDLE){
+			_position_y=(_h-_bounds_h-_border)>>1;
+		}else if(_valign==TEXT_BOTTOM){
+			_position_y=_h-(_bounds_h+_gutter_t+2*_border);
+		}else if(_valign==TEXT_TOP){
+			_position_y=_border+_gutter_b;
 		}
-	}
+
+		if(_halign==TEXT_CENTER){
+			_position_x=(_w-_bounds_w-_border)>>1;
+		}else if(_halign==TEXT_RIGHT){
+			_position_x=_w-_border*2-_bounds_w-_gutter_r;
+		}else if(_halign==TEXT_LEFT){
+			_position_x=_border+_gutter_l;
+		}
+	#ifdef _CONSERVE_RAM_
+		_display->fillRect(_x+_border,_y+_border,_w-2*_border,_h-2*_border,_bg);
+		_display->setCursor(_x+_border+_position_x,_y+_border+_bounds_h+_position_y);
+		_display->print(_buf);
+	#else
+		_canvas->setCursor(_position_x-_bounds_x1,_position_y-_bounds_y1);
+		_canvas->print(_buf);
+		pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
+		delete _canvas;
+	#endif
+			if(_border!=0){
+			for(uint8_t __j=0;__j<_border;__j++) {
+				_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
+			}
+		}
 	_display->display();
 }
 
@@ -317,6 +328,14 @@ void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float l
 		_color0=_color1=_color2=_fg;
 		_limit0=_limit1=_min;
 	}
+}
+
+void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1){
+	setColors(color0, limit0, color1,0,0);
+}
+
+void tapeGauge::setColors(uint16_t color0){
+	setColors(color0,0,0,0,0);
 }
 
 void tapeGauge::setDirection(uint8_t direction){
