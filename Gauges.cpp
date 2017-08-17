@@ -372,6 +372,13 @@ void tapeGauge::redraw(){
 			_canvas = new GFXcanvas16(_canvas_w,_canvas_h);
 			_canvas->fillScreen(_bg);
 		#endif
+		/*
+		 *
+		 * The whole tape placement isn't right yet. Too much mucking around with paddings...
+		 * and right now, they don't line up between the two drawing methods either.
+		 *
+		 */
+
 		if(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT){
 			(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_w/(_max-_min)+0.5):_tapeLimit0=0;
 			(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_w/(_max-_min)+0.5):_tapeLimit1=0;
@@ -443,7 +450,7 @@ void tapeGauge::redraw(){
 		_display->display();
 	}
 }
-
+/*
 void tapeGauge::fillRectHelper(int16_t __x, int16_t __y, int16_t __w, int16_t __h, uint16_t __color){
 	Serial.printf("fillRectHelper called with __x:%i, __y:%i, __w: %i, __h:%i, __color:%i\n",__x,__y,__w,__h,__color);
 	#ifdef _CONSERVE_RAM_
@@ -452,3 +459,4 @@ void tapeGauge::fillRectHelper(int16_t __x, int16_t __y, int16_t __w, int16_t __
 		_canvas->fillRect(__x,__y,__w,__h,__color);
 	#endif
 }
+*/

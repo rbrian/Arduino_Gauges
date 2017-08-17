@@ -149,6 +149,12 @@ class textGauge : public displayGauge {
   	const GFXfont *_font;
 };
 
+#ifdef _CONSERVE_RAM_
+	#define fillRectHelper(__x,__y,__w,__h,__color) _display->fillRect(_x+_border+1+__x,_y+_border+__y,__w,__h,__color);
+#else
+	#define fillRectHelper(__x,__y,__w,__h,__color) _canvas->fillRect(__x,__y,__w,__h,__color);
+#endif
+
 class tapeGauge : public displayGauge {
 public:
     tapeGauge(),
@@ -174,7 +180,7 @@ protected:
     _min, _max,
     _limit0,_limit1;
   private:
-    void fillRectHelper(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+    //void fillRectHelper(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
     uint16_t __tape_length;
 };
 #endif
