@@ -39,7 +39,7 @@
  *
  */
 
-#define _CONSERVE_RAM_
+//#define _CONSERVE_RAM_
 
 /*
  * Text positioning values

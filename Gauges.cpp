@@ -212,7 +212,7 @@ void textGauge::redraw(){
 	char _buf[_val.length()+2];
 	int16_t  _bounds_x1, _bounds_y1;
 	uint16_t _bounds_w, _bounds_h,
-					 _position_x, _position_y;
+					 _position_x, _position_y = 0;
 
 	_val.toCharArray(_buf,_val.length()+1);
 	#ifdef _CONSERVE_RAM_
@@ -414,14 +414,14 @@ void tapeGauge::redraw(){
 				}
 			}else{
 				if(_tapeLimit1>0) {
-					fillRectHelper(_gutter_l,_h-(_gutter_b+_tapeLimit0+_border),_tape_w,_tapeLimit0,_color0);
-					fillRectHelper(_gutter_l,_h-(_gutter_b+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_tape_w,(_tapeLimit1-_tapeLimit0),_color1);
-				 	fillRectHelper(_gutter_l,_h-(_gutter_b+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_tape_w, _tape_length-_tapeLimit1,_color2);
+					fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border),_tape_w,_tapeLimit0,_color0);
+					fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_tape_w,(_tapeLimit1-_tapeLimit0),_color1);
+				 	fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_tape_w, _tape_length-_tapeLimit1,_color2);
 				}else if(_tapeLimit0>0){
-					fillRectHelper(_gutter_l,_h-(_gutter_b+_border)-_tapeLimit0,_tape_w, _tapeLimit0,_color0);
-					fillRectHelper(_gutter_l,_h-(_gutter_b+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_tape_w, _tape_length-_tapeLimit0,_color1);
+					fillRectHelper(_gutter_l+1,_h-(_gutter_b+_border)-_tapeLimit0,_tape_w, _tapeLimit0,_color0);
+					fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_tape_w, _tape_length-_tapeLimit0,_color1);
 				}else{
-					fillRectHelper(_gutter_l,_h-(_gutter_b+_tape_length+_border), _tape_w,_tape_length,_color0);
+					fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tape_length+_border), _tape_w,_tape_length,_color0);
 				}
 			}
 		}
@@ -433,6 +433,7 @@ void tapeGauge::redraw(){
 			pushBitmap(_x+_border+1,_y+_border,_canvas->getBuffer(),_canvas_w,_canvas_h);
 			delete _canvas;
 		#endif
+
 		if(_border!=0){
 			for(uint8_t __j=0;__j<_border;__j++) {
 				_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
@@ -444,9 +445,10 @@ void tapeGauge::redraw(){
 }
 
 void tapeGauge::fillRectHelper(int16_t __x, int16_t __y, int16_t __w, int16_t __h, uint16_t __color){
+	Serial.printf("fillRectHelper called with __x:%i, __y:%i, __w: %i, __h:%i, __color:%i\n",__x,__y,__w,__h,__color);
 	#ifdef _CONSERVE_RAM_
 		_display->fillRect(_x+_border+1+__x,_y+_border+__y,__w,__h,__color);
 	#else
-		fillRectHelper(__x,__y,__w,__h,__color);
+		_canvas->fillRect(__x,__y,__w,__h,__color);
 	#endif
 }
