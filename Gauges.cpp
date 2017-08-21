@@ -88,14 +88,15 @@ displayGauge::displayGauge(){
 }
 
 void displayGauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t w, uint16_t h){
-  int _c=0;
+  uint16_t _c=0;
+	uint16_t _p;
   _display->startWrite();
 	if(w>=h){
 		/*
 		 *  rect is wider than tall, optimizing for horizontal structures (drawing longest possible line)
 		 */
-		 Serial.println("drawing horizontally");
-		int _p=1;
+  	Serial.println("drawing horizontally");
+		_p=1;
 		for(uint16_t __y=y;__y<y+h;__y++){
 		  for(uint16_t __x=x;__x<x+w;__x++){
 		    while(buffer[_p]==buffer[_p+_c] and __x+_c+1<x+w){
@@ -117,7 +118,7 @@ void displayGauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t
 		 */
 		 Serial.println("drawing vertically");
 		 for(uint16_t __x=x-1;__x<x+w;__x++){
-			 int _p=__x-x+1;
+			 _p=__x-x+1;
 			 for(uint16_t __y=y;__y<y+h-1;__y++){
 				 //_p=__y*w+__x;
 				 while(buffer[_p]==buffer[_p+_c*w] and __y+_c+1<y+h){
@@ -456,48 +457,24 @@ void tapeGauge::redraw(){
 				(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_w/(_max-_min)+0.5):_tapeLimit1=0;
 				if(_direction==TAPE_LEFTRIGHT){
 					if(_tapeLimit1>0) {
-						/*
-						fillRectHelper(_gutter_l+1,_gutter_t, _tapeLimit0-1,_tape_h,_color0);
-						fillRectHelper(_gutter_l+_tapeLimit0,_gutter_t, _tapeLimit1-_tapeLimit0-1,_tape_h,_color1);
-					 	fillRectHelper(_gutter_l+_tapeLimit1,_gutter_t, _tape_length-_tapeLimit1-1,_tape_h,_color2);
-						*/
 						fillRectHelper(0,0,_tapeLimit0,_tape_h,_color0);
 						fillRectHelper(_tapeLimit0,0,_tapeLimit1-_tapeLimit0,_tape_h,_color1);
 						fillRectHelper(_tapeLimit1,0,_tape_length-_tapeLimit1,_tape_h,_color2);
 					}else if(_tapeLimit0>0){
-						/*
-						fillRectHelper(_gutter_l+1,_gutter_t, _tapeLimit0-1,_tape_h,_color0);
-						fillRectHelper(_gutter_l+_tapeLimit0,_gutter_t, _tape_length-_tapeLimit0-1,_tape_h,_color1);
-						*/
 						fillRectHelper(0,0,_tapeLimit0,_tape_h,_color0);
 						fillRectHelper(_tapeLimit0,0,_tape_length-_tapeLimit0,_tape_h,_color1);
 					}else{
-						/*
-						fillRectHelper(_gutter_l+1,_gutter_t, _tape_length-1,_tape_h,_color0);
-						*/
 						fillRectHelper(0,0,_tape_length,_tape_h,_color0);
 					}
 				}else{
 					if(_tapeLimit1>0) {
-						/*
-						fillRectHelper(_w+1-(_gutter_r+_tapeLimit0+_border),_gutter_t, _tapeLimit0,_tape_h,_color0);
-						fillRectHelper(_w+1-(_gutter_r+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
-					 	fillRectHelper(_w+1-(_gutter_r+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_gutter_t, _tape_length-_tapeLimit1,_tape_h,_color2);
-						*/
 						fillRectHelper(_tape_w-_tapeLimit0,0,_tapeLimit0,_tape_h,_color0);
 						fillRectHelper(_tape_w-_tapeLimit1,0,_tapeLimit1-_tapeLimit0,_tape_h,_color1);
 						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color2);
 					}else if(_tapeLimit0>0){
-						/*
-						fillRectHelper(_w+1-(_gutter_r+_border)-_tapeLimit0,_gutter_t, _tapeLimit0,_tape_h,_color0);
-						fillRectHelper(_w+1-(_gutter_r+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_gutter_t, _tape_length-_tapeLimit0,_tape_h,_color1);
-						*/
 						fillRectHelper(_tape_w-_tapeLimit0,0,_tapeLimit0,_tape_h,_color0);
 						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit0,_tape_h, _color1);
 					}else{
-						/*
-						fillRectHelper(_w+1-(_gutter_r+_tape_length+_border),_gutter_t, _tape_length,_tape_h,_color0);
-						*/
 						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color0);
 					}
 				}
@@ -506,37 +483,37 @@ void tapeGauge::redraw(){
 				(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_h/(_max-_min)+0.5):_tapeLimit1=0;
 				if(_direction==TAPE_TOPDOWN){
 					if(_tapeLimit1>0) {
-						/*
-						fillRectHelper(_gutter_l+1,_gutter_t, _tape_w,_tapeLimit0,_color0);
-						fillRectHelper(_gutter_l+1,_gutter_t+_tapeLimit0, _tape_w,_tapeLimit1-_tapeLimit0,_color1);
-					 	fillRectHelper(_gutter_l+1,_gutter_t+_tapeLimit1, _tape_w,_tape_length-_tapeLimit1,_color2);
-						*/
 						fillRectHelper(0,0,_tape_w,_tapeLimit0,_color0);
 						fillRectHelper(0,_tapeLimit0,_tape_w,_tapeLimit1-_tapeLimit0,_color1);
 						fillRectHelper(0,_tapeLimit1,_tape_w,_tape_length-_tapeLimit1,_color2);
 					}else if(_tapeLimit0>0){
-						/*
-						fillRectHelper(_gutter_l+1,_gutter_t,_tape_w, _tapeLimit0,_color0);
-						fillRectHelper(_gutter_l+1,_gutter_t+_tapeLimit0, _tape_w,_tape_length-_tapeLimit0,_color1);
-						*/
 						fillRectHelper(0,0,_tape_w,_tapeLimit0,_color0);
 						fillRectHelper(0,_tapeLimit0, _tape_w, _tape_length-_tapeLimit0, _color1)
 					}else{
-						/*
-						fillRectHelper(_gutter_l+1,_gutter_t,_tape_w, _tape_length,_color0);
-						*/
 						fillRectHelper(0,0,_tape_w,_tape_length,_color0);
 					}
 				}else{
 					if(_tapeLimit1>0) {
+						/*
 						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border),_tape_w,_tapeLimit0,_color0);
 						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_tape_w,(_tapeLimit1-_tapeLimit0),_color1);
 					 	fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_tape_w, _tape_length-_tapeLimit1,_color2);
+						*/
+						fillRectHelper(0,_h-_tapeLimit0,_tape_w,_tapeLimit0,_color0);
+						fillRectHelper(0,_h-_tapeLimit1,_tape_w,_tapeLimit1-_tapeLimit0,_color1);
+						fillRectHelper(0,_h-_tape_length,_tape_w, _tape_length-_tapeLimit1,_color2);
 					}else if(_tapeLimit0>0){
+						/*
 						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_border)-_tapeLimit0,_tape_w, _tapeLimit0,_color0);
 						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_tape_w, _tape_length-_tapeLimit0,_color1);
+						*/
+						fillRectHelper(0,_h-_tapeLimit0,_tape_w,_tapeLimit0,_color0);
+						fillRectHelper(0,_h-_tape_length,_tape_w,_tape_length-_tapeLimit0,_color1);
 					}else{
+						/*
 						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tape_length+_border), _tape_w,_tape_length,_color0);
+						*/
+						fillRectHelper(0,_h-_tape_length,_tape_w,_tape_length,_color0);
 					}
 				}
 			}
@@ -559,13 +536,3 @@ void tapeGauge::redraw(){
 		}
 	}
 }
-/*
-void tapeGauge::fillRectHelper(int16_t __x, int16_t __y, int16_t __w, int16_t __h, uint16_t __color){
-	Serial.printf("fillRectHelper called with __x:%i, __y:%i, __w: %i, __h:%i, __color:%i\n",__x,__y,__w,__h,__color);
-	#ifdef _CONSERVE_RAM_
-		_display->fillRect(_x+_border+1+_gutter_l+__x,_y+_border+_gutter_t+__y,__w,__h,__color);
-	#else
-		_canvas->fillRect(__x,__y,__w,__h,__color);
-	#endif
-}
-*/
