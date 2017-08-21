@@ -3,10 +3,11 @@
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 //#include <spi4teensy3>
-#include "Adafruit_ILI9340.h"
+//#include "Adafruit_ILI9340.h"
 #include "Adafruit_ILI9341.h"
 #include <Adafruit_SSD1306.h>
 //#include <Adafruit_ST7735.h>
+#include "/home/pjakobs/Arduino/Gaugetest/lib/TFTLCD-Library/Adafruit_TFTLCD.h"
 #include <Wire.h>
 #include <Gauges.h>
 #include <Fonts/FreeMonoBold12pt7b.h>
@@ -16,6 +17,7 @@
 #include <Fonts/digital7italic18pt7b.h>
 #include <Fonts/digital7monoitalic12pt7b.h>
 #include <Fonts/digital7monoitalic18pt7b.h>
+#include <time.h>
 
 #define _sclk 13
 #define _miso 12
@@ -40,13 +42,24 @@
 #define WHITE   0xFFFF
 
 
+
 //Adafruit_ILI9341 tft = Adafruit_ILI9341(_cs1, _dc1, _rst1);
 //Adafruit_ST7735  tft  =  Adafruit_ST7735(_cs, _dc, _rst);
-Adafruit_ILI9341 tft1 = Adafruit_ILI9341(_cs,  _dc, _rst);
+//Adafruit_ILI9341 tft1 = Adafruit_ILI9341(_cs,  _dc, _rst);
+
+// optional
 
 //Adafruit_SSD1306 tft1 = Adafruit_SSD1306();
 //Adafruit_ILI9340 tft  = Adafruit_ILI9340(_cs,   _dc,  _mosi, _sclk, _rst,  _miso);
 //Adafruit_ILI9340 tft1 = Adafruit_ILI9340(_cs1,  _dc1, _mosi, _sclk, _rst1, _miso);
+
+#define LCD_CS A3
+#define LCD_CD A2
+#define LCD_WR A1
+#define LCD_RD A0
+#define LCD_RESET A4
+Adafruit_TFTLCD tft1 = Adafruit_TFTLCD(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+
 textGauge Gspeed = textGauge(&tft1, 20, 20, 75, 40);
 textGauge Gtemp  = textGauge(&tft1, 0, 0, 40, 32);
 textGauge Glabel = textGauge(&tft1, 95, 20, 65, 40);
@@ -60,12 +73,12 @@ void setup() {
   //tft.begin();
 
   Serial.println("beginning initialization");
-  tft1.begin();
+  //tft1.begin();
   pinMode(_led, OUTPUT);
   analogWrite(_led, 255);
-  tft1.setRotation(3);
-  tft1.clearDisplay();
-  tft1.printf("tft1");
+  //tft1.setRotation(3);
+  //tft1.clearDisplay();
+  //tft1.printf("tft1");
 
   /*
   for (int __i=0; __i<=10;__i++){
@@ -88,7 +101,7 @@ void setup() {
   //tft1.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   */
 
-//  Serial.printf("starting TFT with buffer at 0x%x\n", &tft);
+  /*Serial.printf("starting TFT with buffer at 0x%x\n", &tft);*/
   Serial.println("start init Gspeed");
   Gspeed.setAutoRedraw(true);
   Gspeed.setFGColor(WHITE);
@@ -178,7 +191,7 @@ void loop() {
     GspeedGauge2.setValue(i);
     GspeedGauge3.setValue(i);
     t1 = micros();
-    Serial.printf("(temp-tft1) update took %ius\n", t1 - t0);
+    //Serial.printf("(temp-tft1) update took %ius\n", t1 - t0);
     
   }
   Serial.println("setting Label");
@@ -207,7 +220,7 @@ void loop() {
     GspeedGauge2.setValue(i);
     GspeedGauge3.setValue(i);
     t1 = micros();
-    Serial.printf("(temp tft) update took %ius\n", t1 - t0);
+    //Serial.printf("(temp tft) update took %ius\n", t1 - t0);
     
   }
   Glabel.setValue("kmh");

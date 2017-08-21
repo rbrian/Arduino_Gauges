@@ -27,11 +27,11 @@
 #endif
 
 /*
- * This library isses Adafruit_GFX canvas16, which are basically off screen bitmaps,
+ * This library uses Adafruit_GFX canvas16, which are basically off screen bitmaps,
  * to avoid flickering redraws.
  * Canvases require quite a bit of available RAM (for a simple 40x80 pixel Gauge, that
  * would be 40x80x2 Bytes= 4,8kB).
- * That's not an issue on 32 bit platforms like ARM or ESP8266, but, traditional
+ * That's not an issue on 32 bit platforms like ARM or ESP8266, but traditional
  * AVR based Arduinos will not work.
  * I'll include a _CONSERVE_RAM_ setting that will draw the gauges without using a
  * canvas. This should use less memory and also be a bit faster, but it will lead to flickering
@@ -150,7 +150,7 @@ class textGauge : public displayGauge {
 };
 
 #ifdef _CONSERVE_RAM_
-	#define fillRectHelper(__x,__y,__w,__h,__color) _display->fillRect(_x+_border+1+__x,_y+_border+__y,__w,__h,__color);
+	#define fillRectHelper(__x,__y,__w,__h,__color) _display->fillRect(_x+_border+_gutter_l+1+__x,_y+_border+_gutter_t+__y,__w,__h,__color);
 #else
 	#define fillRectHelper(__x,__y,__w,__h,__color) _canvas->fillRect(__x,__y,__w,__h,__color);
 #endif

@@ -72,37 +72,68 @@ displayGauge::displayGauge(Adafruit_GFX *display,uint16_t x, uint16_t y, uint16_
 	_y=y;
 	_w=w;
 	_h=h;
+	_visible=true;
 }
 
 displayGauge::displayGauge(Adafruit_GFX *display){
 	_x=_y=_w=_h=0;
 	_display=display;
+	_visible=true;
 }
 
 displayGauge::displayGauge(){
     _x=_y=_w=_h=0;
     _display=NULL;
+		_visible=true;
 }
 
 void displayGauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t w, uint16_t h){
-  int _p=1;
   int _c=0;
   _display->startWrite();
-  for(uint16_t __y=y;__y<y+h;__y++){
-    for(uint16_t __x=x;__x<x+w;__x++){
-      while(buffer[_p]==buffer[_p+_c] and __x+_c+1<x+w){
-        _c++;
-      }
-      if(_c>1){
-        _display->writeFastHLine(__x,__y,_c,buffer[_p]);
-        _p+=(_c);
-        __x+=(_c-1);
-        _c=1;
-      }else{
-        _display->writePixel(__x,__y,buffer[_p++]);
-      }
-    }
-  }
+	if(w>=h){
+		/*
+		 *  rect is wider than tall, optimizing for horizontal structures (drawing longest possible line)
+		 */
+		 Serial.println("drawing horizontally");
+		int _p=1;
+		for(uint16_t __y=y;__y<y+h;__y++){
+		  for(uint16_t __x=x;__x<x+w;__x++){
+		    while(buffer[_p]==buffer[_p+_c] and __x+_c+1<x+w){
+		      _c++;
+		    }
+		    if(_c>1){
+		      _display->writeFastHLine(__x,__y,_c,buffer[_p]);
+		      _p+=(_c);
+		      __x+=(_c-1);
+		      _c=1;
+		    }else{
+		      _display->writePixel(__x,__y,buffer[_p++]);
+		    }
+		  }
+	  }
+	}else{
+		/*
+		 *  rect is taller than wide, optimizing for vertical structures (drawing longest possible line)
+		 */
+		 Serial.println("drawing vertically");
+		 for(uint16_t __x=x;__x<x+w;__x++){
+			 int _p=__x-x+1;
+			 for(uint16_t __y=y;__y<y+h;__y++){
+				 //_p=__y*w+__x;
+				 while(buffer[_p]==buffer[_p+_c*w] and __y+_c+1<y+h){
+					 _c++;
+				 }
+				 if(_c>1){
+					 _display->writeFastVLine(__x,__y,_c,buffer[_p]);
+					 _p+=(_c*w);
+					 __y+=(_c-1);
+					 _c=1;
+				 }else{
+					 _display->writePixel(__x,__y,buffer[_p+=w]);
+				 }
+			 }
+		 }
+	}
   _display->endWrite();
 }
 
@@ -126,6 +157,7 @@ void displayGauge::setSize(uint16_t w, uint16_t h){
 
 void displayGauge::setVisible(bool val){
     _visible=val;
+		if(_visible) redraw();
 }
 
 void displayGauge::setFGColor(uint16_t fg){
@@ -176,11 +208,13 @@ void displayGauge::setMargins(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_
 textGauge::textGauge(){
 	_x=_y=_w=_h=0;
 	_display=0;
+	_visible=true;
 }
 
 textGauge::textGauge(Adafruit_GFX *display){
 	_x=_y=_w=_h=0;
 	_display=display;
+	_visible=true;
 }
 
 textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h){
@@ -189,6 +223,7 @@ textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, 
 	_y=y;
 	_w=w;
 	_h=h;
+	_visible=true;
 }
 
 void textGauge::setFont(const GFXfont *font){
@@ -208,56 +243,58 @@ void textGauge::setCursor(uint16_t x, uint16_t y){
 }
 
 void textGauge::redraw(){
-	//Serial.printf("updating Gauge with %s\n",_txtval);
-	char _buf[_val.length()+2];
-	int16_t  _bounds_x1, _bounds_y1;
-	uint16_t _bounds_w, _bounds_h,
-					 _position_x, _position_y = 0;
+	if(_visible){
+		//Serial.printf("updating Gauge with %s\n",_txtval);
+		char _buf[_val.length()+2];
+		int16_t  _bounds_x1, _bounds_y1;
+		uint16_t _bounds_w, _bounds_h,
+						 _position_x, _position_y = 0;
 
-	_val.toCharArray(_buf,_val.length()+1);
-	#ifdef _CONSERVE_RAM_
-		_display->setTextColor(_fg);
-		_display->setFont(_font);
-		_display->getTextBounds(_buf, _x+_border, _y+_border, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
-	#else
-		_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
-		_canvas->fillScreen(_bg);
-		_canvas->setTextColor(_fg);
-		_canvas->setFont(_font);
-		_canvas->getTextBounds(_buf, 0, 0, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
-	#endif
+		_val.toCharArray(_buf,_val.length()+1);
+		#ifdef _CONSERVE_RAM_
+			_display->setTextColor(_fg);
+			_display->setFont(_font);
+			_display->getTextBounds(_buf, _x+_border, _y+_border, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
+		#else
+			_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
+			_canvas->fillScreen(_bg);
+			_canvas->setTextColor(_fg);
+			_canvas->setFont(_font);
+			_canvas->getTextBounds(_buf, 0, 0, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
+		#endif
 
-		if(_valign==TEXT_MIDDLE){
-			_position_y=(_h-_bounds_h-_border)>>1;
-		}else if(_valign==TEXT_BOTTOM){
-			_position_y=_h-(_bounds_h+_gutter_t+2*_border);
-		}else if(_valign==TEXT_TOP){
-			_position_y=_border+_gutter_b;
-		}
-
-		if(_halign==TEXT_CENTER){
-			_position_x=(_w-_bounds_w-_border)>>1;
-		}else if(_halign==TEXT_RIGHT){
-			_position_x=_w-_border*2-_bounds_w-_gutter_r;
-		}else if(_halign==TEXT_LEFT){
-			_position_x=_border+_gutter_l;
-		}
-	#ifdef _CONSERVE_RAM_
-		_display->fillRect(_x+_border,_y+_border,_w-2*_border,_h-2*_border,_bg);
-		_display->setCursor(_x+_position_x,_y+_bounds_h+_position_y);
-		_display->print(_buf);
-	#else
-		_canvas->setCursor(_position_x-_bounds_x1,_position_y-_bounds_y1);
-		_canvas->print(_buf);
-		pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
-		delete _canvas;
-	#endif
-			if(_border!=0){
-			for(uint8_t __j=0;__j<_border;__j++) {
-				_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
+			if(_valign==TEXT_MIDDLE){
+				_position_y=(_h-_bounds_h-_border)>>1;
+			}else if(_valign==TEXT_BOTTOM){
+				_position_y=_h-(_bounds_h+_gutter_t+2*_border);
+			}else if(_valign==TEXT_TOP){
+				_position_y=_border+_gutter_b;
 			}
-		}
-	_display->display();
+
+			if(_halign==TEXT_CENTER){
+				_position_x=(_w-_bounds_w-_border)>>1;
+			}else if(_halign==TEXT_RIGHT){
+				_position_x=_w-_border*2-_bounds_w-_gutter_r;
+			}else if(_halign==TEXT_LEFT){
+				_position_x=_border+_gutter_l;
+			}
+		#ifdef _CONSERVE_RAM_
+			_display->fillRect(_x+_border,_y+_border,_w-2*_border,_h-2*_border,_bg);
+			_display->setCursor(_x+_position_x,_y+_bounds_h+_position_y);
+			_display->print(_buf);
+		#else
+			_canvas->setCursor(_position_x-_bounds_x1,_position_y-_bounds_y1);
+			_canvas->print(_buf);
+			pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
+			delete _canvas;
+		#endif
+				if(_border!=0){
+				for(uint8_t __j=0;__j<_border;__j++) {
+					_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
+				}
+			}
+		_display->display();
+	}
 }
 
 /*
@@ -271,6 +308,7 @@ tapeGauge::tapeGauge(){
 	_direction=TAPE_LEFTRIGHT;
 	_color0=_color1=_color2=_fg;
 	_limit0=_limit1=_min;
+	_visible=true;
 }
 
 tapeGauge::tapeGauge(Adafruit_GFX *display){
@@ -279,6 +317,7 @@ tapeGauge::tapeGauge(Adafruit_GFX *display){
 	_direction=TAPE_LEFTRIGHT;
 	_color0=_color1=_color2=_fg;
 	_limit0=_limit1=_min;
+	_visible=true;
 }
 
 tapeGauge::tapeGauge(Adafruit_GFX *display,uint8_t direction){
@@ -287,6 +326,7 @@ tapeGauge::tapeGauge(Adafruit_GFX *display,uint8_t direction){
 	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_BOTTOMUP)?_direction=direction:_direction=TAPE_LEFTRIGHT;
 	_color0=_color1=_color2=_fg;
 	_limit0=_limit1=_min;
+	_visible=true;
 }
 
 tapeGauge::tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h){
@@ -297,6 +337,7 @@ tapeGauge::tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, 
 	_h=h;
 	_color0=_color1=_color2=_fg;
 	_limit0=_limit1=_min;
+	_visible=true;
 }
 
 tapeGauge::tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t direction){
@@ -308,6 +349,7 @@ tapeGauge::tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, 
 	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_BOTTOMUP)?_direction=direction:_direction=TAPE_LEFTRIGHT;
 	_color0=_color1=_color2=_fg;
 	_limit0=_limit1=_min;
+	_visible=true;
 }
 
 void tapeGauge::setMinMax(float minimum, float maximum){
@@ -356,105 +398,172 @@ void tapeGauge::setTicks(uint16_t major, uint16_t minor){
 }
 
 void tapeGauge::redraw(){
-	uint16_t _tape_length, _tapeLimit0, _tapeLimit1,_canvas_w, _canvas_h,_tape_w,_tape_h;
+	if(_visible){
 
-	float __val;
-	__val=_val.toFloat();
-	_canvas_w=_w-2*_border-1;
-	_canvas_h=_h-2*_border;
-	_tape_w=_canvas_w-_gutter_l-_gutter_r;
-	_tape_h=_canvas_h-_gutter_t-_gutter_b;
-	(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT)?_tape_length=(uint16_t)(__val*(float)_tape_w/(_max-_min)+0.5):_tape_length=(uint16_t)(__val*(float)_tape_h/(_max-_min)+0.5);
-	if(_tape_length!=__tape_length){
-		#ifdef _CONSERVE_RAM_
-			_display->fillRect(_x,_y,_w,_h,_bg);
-		#else
-			_canvas = new GFXcanvas16(_canvas_w,_canvas_h);
-			_canvas->fillScreen(_bg);
-		#endif
 		/*
+		 * A tape gauge is a horizontal or vertical "tape", representing the value.
+		 * There can be numerous different tapes:
+		 * - tapes that grow from "min" value to "max" value
+		 * - tapes that grow from zero to either negative or positive values
+		 * - tapes that actually are not tapes but a "moving needle" that points to
+		 *   the corresponding value
 		 *
-		 * The whole tape placement isn't right yet. Too much mucking around with paddings...
-		 * and right now, they don't line up between the two drawing methods either.
+		 * A tape can have, as any other on screen Gauge, a border and a gutter. Both
+		 * are "keep out" areas for the Gauge itself. They only differ in color.
 		 *
+		 * A tape gauge has the following layout:
+		 *
+		 *     Y
+		 *     v
+		 *   X>BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB  ^
+		 *     BGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGB  |
+		 *     BGTTTTTTTTTTTTTTT              GB  |
+		 *     BGTTTTTTTTTTTTTTT              GB  h
+		 *     BGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGB  |
+		 *     BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB  v
+	   *     <--------------w---------------->
+		 * In tis case, both border and gutter are drawn as 1px wide, but they can
+		 * of course be wider.
+		 * while the border has a fixed width all around the Gauge, the gutter can
+		 * have different values for the four sides, allowing to place the Gauge more
+		 * freely in it's cell
 		 */
+		uint16_t _tape_length, _tapeLimit0, _tapeLimit1,_canvas_w, _canvas_h,_tape_w,_tape_h;
 
-		if(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT){
-			(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_w/(_max-_min)+0.5):_tapeLimit0=0;
-			(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_w/(_max-_min)+0.5):_tapeLimit1=0;
-			if(_direction==TAPE_LEFTRIGHT){
-				if(_tapeLimit1>0) {
-					fillRectHelper(_gutter_l+1,_gutter_t, _tapeLimit0-1,_tape_h,_color0);
-					fillRectHelper(_gutter_l+_tapeLimit0,_gutter_t, _tapeLimit1-_tapeLimit0-1,_tape_h,_color1);
-				 	fillRectHelper(_gutter_l+_tapeLimit1,_gutter_t, _tape_length-_tapeLimit1-1,_tape_h,_color2);
-				}else if(_tapeLimit0>0){
-					fillRectHelper(_gutter_l+1,_gutter_t, _tapeLimit0-1,_tape_h,_color0);
-					fillRectHelper(_gutter_l+_tapeLimit0,_gutter_t, _tape_length-_tapeLimit0-1,_tape_h,_color1);
+		float __val;
+		__val=_val.toFloat();
+		_canvas_w=_w-2*_border-_gutter_l-_gutter_r;
+		_canvas_h=_h-2*_border-_gutter_t-_gutter_b;
+		_tape_w=_canvas_w;
+		_tape_h=_canvas_h;
+		(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT)?_tape_length=(uint16_t)(__val*(float)_tape_w/(_max-_min)+0.5):_tape_length=(uint16_t)(__val*(float)_tape_h/(_max-_min)+0.5);
+		if(_tape_length!=__tape_length){
+			#ifdef _CONSERVE_RAM_
+				_display->fillRect(_x,_y,_w,_h,_bg);
+			#else
+				_canvas = new GFXcanvas16(_canvas_w,_canvas_h);
+				_canvas->fillScreen(_bg);
+			#endif
+			/*
+			 *
+			 * The whole tape placement isn't right yet. Too much mucking around with paddings...
+			 * and right now, they don't line up between the two drawing methods either.
+			 *
+			 */
+
+			if(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT){
+				(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_w/(_max-_min)+0.5):_tapeLimit0=0;
+				(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_w/(_max-_min)+0.5):_tapeLimit1=0;
+				if(_direction==TAPE_LEFTRIGHT){
+					if(_tapeLimit1>0) {
+						/*
+						fillRectHelper(_gutter_l+1,_gutter_t, _tapeLimit0-1,_tape_h,_color0);
+						fillRectHelper(_gutter_l+_tapeLimit0,_gutter_t, _tapeLimit1-_tapeLimit0-1,_tape_h,_color1);
+					 	fillRectHelper(_gutter_l+_tapeLimit1,_gutter_t, _tape_length-_tapeLimit1-1,_tape_h,_color2);
+						*/
+						fillRectHelper(0,0,_tapeLimit0,_tape_h,_color0);
+						fillRectHelper(_tapeLimit0,0,_tapeLimit1-_tapeLimit0,_tape_h,_color1);
+						fillRectHelper(_tapeLimit1,0,_tape_length-_tapeLimit1,_tape_h,_color2);
+					}else if(_tapeLimit0>0){
+						/*
+						fillRectHelper(_gutter_l+1,_gutter_t, _tapeLimit0-1,_tape_h,_color0);
+						fillRectHelper(_gutter_l+_tapeLimit0,_gutter_t, _tape_length-_tapeLimit0-1,_tape_h,_color1);
+						*/
+						fillRectHelper(0,0,_tapeLimit0,_tape_h,_color0);
+						fillRectHelper(_tapeLimit0,0,_tape_length-_tapeLimit0,_tape_h,_color1);
+					}else{
+						/*
+						fillRectHelper(_gutter_l+1,_gutter_t, _tape_length-1,_tape_h,_color0);
+						*/
+						fillRectHelper(0,0,_tape_length,_tape_h,_color0);
+					}
 				}else{
-					fillRectHelper(_gutter_l+1,_gutter_t, _tape_length-1,_tape_h,_color0);
+					if(_tapeLimit1>0) {
+						/*
+						fillRectHelper(_w+1-(_gutter_r+_tapeLimit0+_border),_gutter_t, _tapeLimit0,_tape_h,_color0);
+						fillRectHelper(_w+1-(_gutter_r+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
+					 	fillRectHelper(_w+1-(_gutter_r+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_gutter_t, _tape_length-_tapeLimit1,_tape_h,_color2);
+						*/
+						fillRectHelper(_tape_w-_tapeLimit0,0,_tapeLimit0,_tape_h,_color0);
+						fillRectHelper(_tape_w-_tapeLimit1,0,_tapeLimit1-_tapeLimit0,_tape_h,_color1);
+						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color2);
+					}else if(_tapeLimit0>0){
+						/*
+						fillRectHelper(_w+1-(_gutter_r+_border)-_tapeLimit0,_gutter_t, _tapeLimit0,_tape_h,_color0);
+						fillRectHelper(_w+1-(_gutter_r+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_gutter_t, _tape_length-_tapeLimit0,_tape_h,_color1);
+						*/
+						fillRectHelper(_tape_w-_tapeLimit0,0,_tapeLimit0,_tape_h,_color0);
+						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit0,_tape_h, _color1);
+					}else{
+						/*
+						fillRectHelper(_w+1-(_gutter_r+_tape_length+_border),_gutter_t, _tape_length,_tape_h,_color0);
+						*/
+						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color0);
+					}
 				}
 			}else{
-				if(_tapeLimit1>0) {
-					fillRectHelper(_w+1-(_gutter_r+_tapeLimit0+_border),_gutter_t, _tapeLimit0,_tape_h,_color0);
-					fillRectHelper(_w+1-(_gutter_r+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_gutter_t, _tapeLimit1-_tapeLimit0,_tape_h,_color1);
-				 	fillRectHelper(_w+1-(_gutter_r+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_gutter_t, _tape_length-_tapeLimit1,_tape_h,_color2);
-				}else if(_tapeLimit0>0){
-					fillRectHelper(_w+1-(_gutter_r+_border)-_tapeLimit0,_gutter_t, _tapeLimit0,_tape_h,_color0);
-					fillRectHelper(_w+1-(_gutter_r+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_gutter_t, _tape_length-_tapeLimit0,_tape_h,_color1);
+				(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_h/(_max-_min)+0.5):_tapeLimit0=0;
+				(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_h/(_max-_min)+0.5):_tapeLimit1=0;
+				if(_direction==TAPE_TOPDOWN){
+					if(_tapeLimit1>0) {
+						/*
+						fillRectHelper(_gutter_l+1,_gutter_t, _tape_w,_tapeLimit0,_color0);
+						fillRectHelper(_gutter_l+1,_gutter_t+_tapeLimit0, _tape_w,_tapeLimit1-_tapeLimit0,_color1);
+					 	fillRectHelper(_gutter_l+1,_gutter_t+_tapeLimit1, _tape_w,_tape_length-_tapeLimit1,_color2);
+						*/
+						fillRectHelper(0,0,_tape_w,_tapeLimit0,_color0);
+						fillRectHelper(0,_tapeLimit0,_tape_w,_tapeLimit1-_tapeLimit0,_color1);
+						fillRectHelper(0,_tapeLimit1,_tape_w,_tape_length-_tapeLimit1,_color2);
+					}else if(_tapeLimit0>0){
+						/*
+						fillRectHelper(_gutter_l+1,_gutter_t,_tape_w, _tapeLimit0,_color0);
+						fillRectHelper(_gutter_l+1,_gutter_t+_tapeLimit0, _tape_w,_tape_length-_tapeLimit0,_color1);
+						*/
+						fillRectHelper(0,0,_tape_w,_tapeLimit0,_color0);
+						fillRectHelper(0,_tapeLimit0, _tape_w, _tape_length-_tapeLimit0, _color1)
+					}else{
+						/*
+						fillRectHelper(_gutter_l+1,_gutter_t,_tape_w, _tape_length,_color0);
+						*/
+						fillRectHelper(0,0,_tape_w,_tape_length,_color0);
+					}
 				}else{
-					fillRectHelper(_w+1-(_gutter_r+_tape_length+_border),_gutter_t, _tape_length,_tape_h,_color0);
+					if(_tapeLimit1>0) {
+						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border),_tape_w,_tapeLimit0,_color0);
+						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_tape_w,(_tapeLimit1-_tapeLimit0),_color1);
+					 	fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_tape_w, _tape_length-_tapeLimit1,_color2);
+					}else if(_tapeLimit0>0){
+						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_border)-_tapeLimit0,_tape_w, _tapeLimit0,_color0);
+						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_tape_w, _tape_length-_tapeLimit0,_color1);
+					}else{
+						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tape_length+_border), _tape_w,_tape_length,_color0);
+					}
 				}
 			}
-		}else{
-			(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_h/(_max-_min)+0.5):_tapeLimit0=0;
-			(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_h/(_max-_min)+0.5):_tapeLimit1=0;
-			if(_direction==TAPE_TOPDOWN){
-				if(_tapeLimit1>0) {
-					fillRectHelper(_gutter_l+1,_gutter_t, _tape_w,_tapeLimit0,_color0);
-					fillRectHelper(_gutter_l+1,_gutter_t+_tapeLimit0, _tape_w,_tapeLimit1-_tapeLimit0,_color1);
-				 	fillRectHelper(_gutter_l+1,_gutter_t+_tapeLimit1, _tape_w,_tape_length-_tapeLimit1,_color2);
-				}else if(_tapeLimit0>0){
-					fillRectHelper(_gutter_l+1,_gutter_t,_tape_w, _tapeLimit0,_color0);
-					fillRectHelper(_gutter_l+1,_gutter_t+_tapeLimit0, _tape_w,_tape_length-_tapeLimit0,_color1);
-				}else{
-					fillRectHelper(_gutter_l+1,_gutter_t,_tape_w, _tape_length,_color0);
-				}
-			}else{
-				if(_tapeLimit1>0) {
-					fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border),_tape_w,_tapeLimit0,_color0);
-					fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_tape_w,(_tapeLimit1-_tapeLimit0),_color1);
-				 	fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_tape_w, _tape_length-_tapeLimit1,_color2);
-				}else if(_tapeLimit0>0){
-					fillRectHelper(_gutter_l+1,_h-(_gutter_b+_border)-_tapeLimit0,_tape_w, _tapeLimit0,_color0);
-					fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_tape_w, _tape_length-_tapeLimit0,_color1);
-				}else{
-					fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tape_length+_border), _tape_w,_tape_length,_color0);
+
+			//Serial.printf("data: value: %f, tape_length: %i\n min: %f, max: %f \nlimit0: %f, limit1: %f\ntape_limit0: %i, tape_limit1: %i\n\n",__val, _tape_length, _min,_max,_limit0,_limit1,_tapeLimit0,_tapeLimit1);
+
+			__tape_length=_tape_length; //store current length so we don't have to re-draw on no visible change
+			#ifndef _CONSERVE_RAM_
+				pushBitmap(_x+_border+_gutter_l+1,_y+_border+_gutter_t,_canvas->getBuffer(),_canvas_w,_canvas_h);
+				delete _canvas;
+			#endif
+
+			if(_border!=0){
+				for(uint8_t __j=0;__j<_border;__j++) {
+					_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
 				}
 			}
+			//_display->drawRect(_x+_border+1,_y+_border,_w-2*_border-1,_h-2*_border,0xff00);
+			_display->display();
 		}
-
-		//Serial.printf("data: value: %f, tape_length: %i\n min: %f, max: %f \nlimit0: %f, limit1: %f\ntape_limit0: %i, tape_limit1: %i\n\n",__val, _tape_length, _min,_max,_limit0,_limit1,_tapeLimit0,_tapeLimit1);
-
-		__tape_length=_tape_length; //store current length so we don't have to re-draw on no visible change
-		#ifndef _CONSERVE_RAM_
-			pushBitmap(_x+_border+1,_y+_border,_canvas->getBuffer(),_canvas_w,_canvas_h);
-			delete _canvas;
-		#endif
-
-		if(_border!=0){
-			for(uint8_t __j=0;__j<_border;__j++) {
-				_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
-			}
-		}
-		//_display->drawRect(_x+_border+1,_y+_border,_w-2*_border-1,_h-2*_border,0xff00);
-		_display->display();
 	}
 }
 /*
 void tapeGauge::fillRectHelper(int16_t __x, int16_t __y, int16_t __w, int16_t __h, uint16_t __color){
 	Serial.printf("fillRectHelper called with __x:%i, __y:%i, __w: %i, __h:%i, __color:%i\n",__x,__y,__w,__h,__color);
 	#ifdef _CONSERVE_RAM_
-		_display->fillRect(_x+_border+1+__x,_y+_border+__y,__w,__h,__color);
+		_display->fillRect(_x+_border+1+_gutter_l+__x,_y+_border+_gutter_t+__y,__w,__h,__color);
 	#else
 		_canvas->fillRect(__x,__y,__w,__h,__color);
 	#endif
