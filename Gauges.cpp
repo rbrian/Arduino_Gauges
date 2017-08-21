@@ -116,9 +116,9 @@ void displayGauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t
 		 *  rect is taller than wide, optimizing for vertical structures (drawing longest possible line)
 		 */
 		 Serial.println("drawing vertically");
-		 for(uint16_t __x=x;__x<x+w;__x++){
+		 for(uint16_t __x=x-1;__x<x+w;__x++){
 			 int _p=__x-x+1;
-			 for(uint16_t __y=y;__y<y+h;__y++){
+			 for(uint16_t __y=y;__y<y+h-1;__y++){
 				 //_p=__y*w+__x;
 				 while(buffer[_p]==buffer[_p+_c*w] and __y+_c+1<y+h){
 					 _c++;
