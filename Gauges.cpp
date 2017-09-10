@@ -12,6 +12,10 @@ Gauge::Gauge(){
 	_val="";
 }
 
+Gauge::~Gauge(){
+	//default destructor
+}
+
 void Gauge::redraw(){}
 
 void Gauge::setValue(int val){
@@ -87,6 +91,10 @@ displayGauge::displayGauge(){
 		_visible=true;
 }
 
+displayGauge::~displayGauge(){
+	_display->fillRect(_x, _y, _w, _h, _bg);
+}
+
 void displayGauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t w, uint16_t h){
   uint16_t _c=0;
 	uint16_t _p;
@@ -95,7 +103,7 @@ void displayGauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t
 		/*
 		 *  rect is wider than tall, optimizing for horizontal structures (drawing longest possible line)
 		 */
-  	Serial.println("drawing horizontally");
+  	//Serial.println("drawing horizontally");
 		_p=1;
 		for(uint16_t __y=y;__y<y+h;__y++){
 		  for(uint16_t __x=x;__x<x+w;__x++){
@@ -116,7 +124,7 @@ void displayGauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t
 		/*
 		 *  rect is taller than wide, optimizing for vertical structures (drawing longest possible line)
 		 */
-		 Serial.println("drawing vertically");
+		 //Serial.println("drawing vertically");
 		 for(uint16_t __x=x-1;__x<x+w;__x++){
 			 _p=__x-x+1;
 			 for(uint16_t __y=y;__y<y+h-1;__y++){
@@ -366,6 +374,7 @@ void tapeGauge::setMinMax(float minimum, float maximum){
 }
 
 void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2){
+	/*
 	if(limit0>_min && limit0<_max){
 		_limit0=limit0;
 		_color0=color0;
@@ -375,18 +384,26 @@ void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float l
 			_limit1=limit1;
 			_color2=color2;
 		}
+
 	}else{
 		_color0=_color1=_color2=_fg;
 		_limit0=_limit1=_min;
 	}
+	*/
+	_color0=color0;
+	_color1=color1;
+	_color2=color2;
+	_limit0=limit0;
+	_limit1=limit1;
+
 }
 
 void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1){
-	setColors(color0, limit0, color1,0,0);
+	setColors(color0, limit0, color1, limit0, color1);
 }
 
 void tapeGauge::setColors(uint16_t color0){
-	setColors(color0,0,0,0,0);
+	setColors(color0,_min, color0,_min,color0);
 }
 
 void tapeGauge::setDirection(uint8_t direction){
@@ -437,7 +454,41 @@ void tapeGauge::redraw(){
 		_canvas_h=_h-2*_border-_gutter_t-_gutter_b;
 		_tape_w=_canvas_w;
 		_tape_h=_canvas_h;
-		(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT)?_tape_length=(uint16_t)(__val*(float)_tape_w/(_max-_min)+0.5):_tape_length=(uint16_t)(__val*(float)_tape_h/(_max-_min)+0.5);
+		/*
+		 * _tape_[wh] and _canvas_[wh] are synonymous right now, one of them should be removed
+		 */
+
+		 /*
+		  *
+			* Variables:
+			* _canvas_[wh], _tape_[wh] - the maximum width and height of the actual tape to be drawn.
+			* _gutter_[tblr]           - "free" space incide the border
+			* __val                    - the value as float
+			* _min, _max               - the minimum and maximum that is accepted for __val
+			* _limit0, _limit1         - two limits that are used to set up to three color areas
+			* _tape_length             - the scaled length of the tape to be drawn
+			* __tape_length						 - stores the previous _tape_length to avoid unecessary redraws when the actual graphic has not changed
+			* _tapeLimit0, _tapeLimit1 - limits scaled and shifted to tape_length
+			*
+			*  -|======>      |-
+			*   ^min   ^val   ^max
+      *   |<----------->|
+			* min: -50
+			* max: 50
+			* val: -10
+			* tape_width: 100
+			* 100/(50-(-50))*(-10-(-50)))=1*40
+			*    tape_width
+			*   tape_length=(tape_width)/(max-min)*(val-min)
+			*/
+		(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT)?_tape_length=(int16_t)((__val-(float)_min)*(float)_tape_w/(_max-_min)+0.5):_tape_length=(int16_t)((__val-(float)_min)*(float)_tape_h/(_max-_min)+0.5);
+		if(_min<0){
+			char _buf[_val.length()+2];
+			_val.toCharArray(_buf,_val.length()+1);
+			Serial.printf("min: %f, max: %f, $val: %s val: %f, tape: %i\n",_min,_max,_buf,__val,_tape_length);
+		}else{
+			Serial.println("normal");
+		}
 		if(_tape_length!=__tape_length){
 			#ifdef _CONSERVE_RAM_
 				_display->fillRect(_x,_y,_w,_h,_bg);
@@ -453,8 +504,9 @@ void tapeGauge::redraw(){
 			 */
 
 			if(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT){
-				(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_w/(_max-_min)+0.5):_tapeLimit0=0;
-				(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_w/(_max-_min)+0.5):_tapeLimit1=0;
+				(__val>_limit0)?_tapeLimit0=(uint16_t)((_limit0-(float)_min)*_tape_w/(_max-_min)+0.5):_tapeLimit0=0;
+				(__val>_limit1)?_tapeLimit1=(uint16_t)((_limit1-(float)_min)*_tape_w/(_max-_min)+0.5):_tapeLimit1=0;
+				if(_min<0)Serial.printf("tape_limit0: %i, tape_limit1: %i, tape_length: %i\ncolor0: 0x%04x, color1: 0x%04x ,color2: 0x%04x\n\n",_tapeLimit0,_tapeLimit1,_tape_length,_color0,_color1,_color2);
 				if(_direction==TAPE_LEFTRIGHT){
 					if(_tapeLimit1>0) {
 						fillRectHelper(0,0,_tapeLimit0,_tape_h,_color0);
@@ -494,25 +546,13 @@ void tapeGauge::redraw(){
 					}
 				}else{
 					if(_tapeLimit1>0) {
-						/*
-						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border),_tape_w,_tapeLimit0,_color0);
-						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border)-(_tapeLimit1-_tapeLimit0),_tape_w,(_tapeLimit1-_tapeLimit0),_color1);
-					 	fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit1+_border)-(_tape_length-_tapeLimit1),_tape_w, _tape_length-_tapeLimit1,_color2);
-						*/
 						fillRectHelper(0,_h-_tapeLimit0,_tape_w,_tapeLimit0,_color0);
 						fillRectHelper(0,_h-_tapeLimit1,_tape_w,_tapeLimit1-_tapeLimit0,_color1);
 						fillRectHelper(0,_h-_tape_length,_tape_w, _tape_length-_tapeLimit1,_color2);
 					}else if(_tapeLimit0>0){
-						/*
-						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_border)-_tapeLimit0,_tape_w, _tapeLimit0,_color0);
-						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tapeLimit0+_border)-(_tape_length-_tapeLimit0),_tape_w, _tape_length-_tapeLimit0,_color1);
-						*/
 						fillRectHelper(0,_h-_tapeLimit0,_tape_w,_tapeLimit0,_color0);
 						fillRectHelper(0,_h-_tape_length,_tape_w,_tape_length-_tapeLimit0,_color1);
 					}else{
-						/*
-						fillRectHelper(_gutter_l+1,_h-(_gutter_b+_tape_length+_border), _tape_w,_tape_length,_color0);
-						*/
 						fillRectHelper(0,_h-_tape_length,_tape_w,_tape_length,_color0);
 					}
 				}
