@@ -40,6 +40,8 @@
 #define WHITE   0xFFFF
 
 
+const int ledPin = 13;
+
 //Adafruit_ILI9341 tft = Adafruit_ILI9341(_cs1, _dc1, _rst1);
 //Adafruit_ST7735  tft  =  Adafruit_ST7735(_cs, _dc, _rst);
 Adafruit_ILI9341 tft1 = Adafruit_ILI9341(_cs,  _dc, _rst);
@@ -48,17 +50,18 @@ Adafruit_ILI9341 tft1 = Adafruit_ILI9341(_cs,  _dc, _rst);
 //Adafruit_ILI9340 tft  = Adafruit_ILI9340(_cs,   _dc,  _mosi, _sclk, _rst,  _miso);
 //Adafruit_ILI9340 tft1 = Adafruit_ILI9340(_cs1,  _dc1, _mosi, _sclk, _rst1, _miso);
 textGauge Gspeed = textGauge(&tft1, 20, 20, 75, 40);
-textGauge Gtemp  = textGauge(&tft1, 0, 0, 64, 80);
+textGauge Gtemp  = textGauge(&tft1, 0, 0, 64, 32);
 textGauge Glabel = textGauge(&tft1, 95, 20, 65, 40);
-tapeGauge GspeedGauge = tapeGauge(&tft1, 20,120,100,32,TAPE_RIGHTLEFT);
-tapeGauge GspeedGauge1 = tapeGauge(&tft1, 20,160,100,32,TAPE_LEFTRIGHT);
-tapeGauge GspeedGauge2 = tapeGauge(&tft1, 170,20,40,200,TAPE_BOTTOMUP);
-tapeGauge GspeedGauge3 = tapeGauge(&tft1, 220,20,40,200,TAPE_TOPDOWN);
+tapeGauge GspeedGauge = tapeGauge(&tft1, 20, 120, 100, 32, TAPE_RIGHTLEFT);
+tapeGauge GspeedGauge1 = tapeGauge(&tft1, 20, 160, 100, 32, TAPE_LEFTRIGHT);
+tapeGauge GspeedGauge2 = tapeGauge(&tft1, 170, 20, 40, 200, TAPE_BOTTOMUP);
+tapeGauge GspeedGauge3 = tapeGauge(&tft1, 220, 20, 40, 200, TAPE_TOPDOWN);
 void setup() {
   Serial.begin(9600);
-  delay(2000);
+  //while (!Serial.available());
+  //delay(2000);
   //tft.begin();
-
+  pinMode(ledPin,OUTPUT);
   Serial.println("beginning initialization");
   tft1.begin();
   pinMode(_led, OUTPUT);
@@ -67,35 +70,27 @@ void setup() {
   tft1.clearDisplay();
   tft1.printf("tft1");
 
-  /*
-  for (int __i=0; __i<=10;__i++){
-    Serial.print(".");
-    tft1.print(".");
-    delay(100);
-  }
-  */
-//delay(5000);
   Serial.println("tft1 initialized");
 
   /*
-   *
-   tft.begin();
-  tft.setRotation(3);
-  tft.clearDisplay();
-  tft.printf("tft");
-  Serial.printf("tft initialized \n");
-  delay(5000);
-  //tft1.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+
+    tft.begin();
+    tft.setRotation(3);
+    tft.clearDisplay();
+    tft.printf("tft");
+    Serial.printf("tft initialized \n");
+    delay(5000);
+    //tft1.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   */
 
-//  Serial.printf("starting TFT with buffer at 0x%x\n", &tft);
+  //  Serial.printf("starting TFT with buffer at 0x%x\n", &tft);
   Serial.println("start init Gspeed");
   Gspeed.setAutoRedraw(true);
   Gspeed.setFGColor(WHITE);
   Gspeed.setBGColor(BLUE);
   Gspeed.setBorder(2);
   Gspeed.setBorderColor(GREEN);
-  Gspeed.setGutter(2,2,2,2);
+  Gspeed.setGutter(2, 2, 2, 2);
   Gspeed.setHAlign(TEXT_RIGHT);
   Gspeed.setVAlign(TEXT_CENTER);
   Gspeed.setFont(&FreeMonoBold18pt7b);
@@ -110,7 +105,7 @@ void setup() {
   Glabel.setBorderColor(RED);
   Glabel.setHAlign(TEXT_LEFT);
   Glabel.setVAlign(TEXT_MIDDLE);
-  Glabel.setGutter(1,1,1,1);
+  Glabel.setGutter(1, 1, 1, 1);
   Glabel.setFont(&FreeSans12pt7b);
   Glabel.setAutoRedraw(true);
   Glabel.setValue("kmh");
@@ -124,43 +119,45 @@ void setup() {
   Gtemp.setFont(&FreeMonoBold18pt7b);
   Gtemp.redraw();
 
-  GspeedGauge.setMinMax(0,200);
-  GspeedGauge.setColors(GREEN,120,YELLOW,180,RED);
+  GspeedGauge.setMinMax(0, 200);
+  GspeedGauge.setColors(GREEN, 120, YELLOW, 180, RED);
   GspeedGauge.setAutoRedraw(true);
   GspeedGauge.setMargins(3);
   GspeedGauge.setBorder(2);
   GspeedGauge.setBorderColor(BLUE);
 
-  GspeedGauge1.setMinMax(0,200);
-  GspeedGauge1.setColors(GREEN,120,YELLOW,180,RED);
+  GspeedGauge1.setMinMax(-100, 100);
+  GspeedGauge1.setBGColor(YELLOW);
+  GspeedGauge1.setColors(BLUE,0,RED);
+  //GspeedGauge1.setColors(GREEN, 120, YELLOW, 180, RED);
   GspeedGauge1.setAutoRedraw(true);
   GspeedGauge1.setMargins(1);
   GspeedGauge1.setBorder(2);
   GspeedGauge1.setBorderColor(WHITE);
 
-  GspeedGauge2.setMinMax(0,200);
-  GspeedGauge2.setColors(GREEN,60,YELLOW,140,RED);
+  GspeedGauge2.setMinMax(0, 200);
+  GspeedGauge2.setColors(GREEN, 60, YELLOW, 140, RED);
   GspeedGauge2.setAutoRedraw(true);
   GspeedGauge2.setMargins(2);
   GspeedGauge2.setBorder(2);
   GspeedGauge2.setBorderColor(WHITE);
 
-  GspeedGauge3.setMinMax(0,200);
-  GspeedGauge3.setColors(BLUE,100,RED);
+  GspeedGauge3.setMinMax(0, 200);
+  GspeedGauge3.setColors(BLUE, 100, RED);
   GspeedGauge3.setAutoRedraw(true);
   GspeedGauge3.setMargins(2);
   GspeedGauge3.setBorder(2);
   GspeedGauge3.setBorderColor(WHITE);
 
-  GspeedGauge.setVisible(false);
-  GspeedGauge1.setVisible(false);
+  GspeedGauge.setVisible(true);
+  GspeedGauge1.setVisible(true);
 }
 void loop() {
   // put your main code here, to run repeatedly:
   time_t t0, t1;
 
   Gtemp.setDisplay(&tft1);
-  Gtemp.setPosition(20,80);
+  Gtemp.setPosition(20, 80);
   Gtemp.setFGColor(WHITE);
   Gtemp.setBGColor(BLUE);
   Gtemp.setBorder(0);
@@ -168,16 +165,17 @@ void loop() {
   //oled.clearDisplay();
 
   //tft.fillScreen(BLUE);
-  tft1.fillScreen(BLACK);
+  //tft1.fillScreen(BLACK);
   for (uint8_t i = 0; i <= 200; i++) {
     t0 = micros();
+    digitalWrite(ledPin,!digitalRead(ledPin));
     Gspeed.setValue(i);
     //t1 = micros();
     //Serial.printf("(speed) update took %ius\n", t1 - t0);
     Gtemp.setValue((int)i / 10);
     //t0 = micros();
     GspeedGauge.setValue(i);
-    GspeedGauge1.setValue(i);
+    GspeedGauge1.setValue(i-100);
     GspeedGauge2.setValue(i);
     GspeedGauge3.setValue(i);
     t1 = micros();
@@ -188,7 +186,7 @@ void loop() {
   Glabel.setValue("mph");
   Glabel.redraw();
   Gtemp.setDisplay(&tft1);
-  Gtemp.setPosition(20,80);
+  Gtemp.setPosition(20, 80);
   Gtemp.setFGColor(WHITE);
   Gtemp.setBGColor(BLUE);
 
@@ -202,11 +200,12 @@ void loop() {
     Gspeed.setValue(i);
     //t1 = micros();
     //Serial.printf("update took %ius\n", t1 - t0);
+    digitalWrite(ledPin,!digitalRead(ledPin));
 
     Gtemp.setValue((int)i / 10);
     //t0 = micros();
     GspeedGauge.setValue(i);
-    GspeedGauge1.setValue(i);
+    GspeedGauge1.setValue(i - 100);
     GspeedGauge2.setValue(i);
     GspeedGauge3.setValue(i);
     t1 = micros();
