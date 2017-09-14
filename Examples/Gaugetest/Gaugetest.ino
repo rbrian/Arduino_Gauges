@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <TimeLib.h>
 
 #include <SPI.h>
 #include <Adafruit_GFX.h>
@@ -9,6 +10,7 @@
 //#include <Adafruit_ST7735.h>
 #include <Wire.h>
 #include <Gauges.h>
+
 #include <Fonts/FreeMonoBold12pt7b.h>
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeMonoBold18pt7b.h>
@@ -53,15 +55,19 @@ textGauge Gspeed = textGauge(&tft1, 20, 20, 75, 40);
 textGauge Gtemp  = textGauge(&tft1, 0, 0, 64, 32);
 textGauge Glabel = textGauge(&tft1, 95, 20, 65, 40);
 tapeGauge GspeedGauge = tapeGauge(&tft1, 20, 120, 100, 32, TAPE_RIGHTLEFT);
-tapeGauge GspeedGauge1 = tapeGauge(&tft1, 20, 160, 100, 32, TAPE_LEFTRIGHT);
+tapeGauge GspeedGauge1 = tapeGauge(&tft1, 20, 160, 100, 32, TAPE_PLUSMINUS_H);
+//tapeGauge GspeedGauge1 = tapeGauge(&tft1, 20, 160, 100, 32, TAPE_RIGHTLEFT);
 tapeGauge GspeedGauge2 = tapeGauge(&tft1, 170, 20, 40, 200, TAPE_BOTTOMUP);
 tapeGauge GspeedGauge3 = tapeGauge(&tft1, 220, 20, 40, 200, TAPE_TOPDOWN);
 void setup() {
   Serial.begin(9600);
+  delay(500);
   //while (!Serial.available());
   //delay(2000);
   //tft.begin();
   pinMode(ledPin,OUTPUT);
+  time_t utc=compileTime();
+  Serial.printf("Code compiled %02i.%02i.%04i %02i:%02i\n", day(utc), month(utc), year(utc), hour(utc), minute(utc));
   Serial.println("beginning initialization");
   tft1.begin();
   pinMode(_led, OUTPUT);
@@ -127,9 +133,9 @@ void setup() {
   GspeedGauge.setBorderColor(BLUE);
 
   GspeedGauge1.setMinMax(-100, 100);
-  GspeedGauge1.setBGColor(YELLOW);
-  GspeedGauge1.setColors(BLUE,0,RED);
-  //GspeedGauge1.setColors(GREEN, 120, YELLOW, 180, RED);
+  //GspeedGauge1.setBGColor(YELLOW);
+  //GspeedGauge1.setColors(BLUE);
+  GspeedGauge1.setColors(BLUE, 0, YELLOW, 35, RED);
   GspeedGauge1.setAutoRedraw(true);
   GspeedGauge1.setMargins(1);
   GspeedGauge1.setBorder(2);
@@ -213,4 +219,29 @@ void loop() {
 
   }
   Glabel.setValue("kmh");
+}
+
+//Function to return the compile date and time as a time_t value
+time_t compileTime(void)
+{
+#define FUDGE 5        //fudge factor to allow for compile time (seconds, YMMV)
+
+  char *compDate = __DATE__, *compTime = __TIME__, *months = "JanFebMarAprMayJunJulAugSepOctNovDec";
+  char chMon[3], *m;
+  int d, y;
+  tmElements_t tm;
+  time_t t;
+
+  strncpy(chMon, compDate, 3);
+  chMon[3] = '\0';
+  m = strstr(months, chMon);
+  tm.Month = ((m - months) / 3 + 1);
+
+  tm.Day = atoi(compDate + 4);
+  tm.Year = atoi(compDate + 7) - 1970;
+  tm.Hour = atoi(compTime);
+  tm.Minute = atoi(compTime + 3);
+  tm.Second = atoi(compTime + 6);
+  t = makeTime(tm);
+  return t + FUDGE;        //add fudge factor to allow for compile time
 }

@@ -332,7 +332,7 @@ tapeGauge::tapeGauge(Adafruit_GFX *display){
 tapeGauge::tapeGauge(Adafruit_GFX *display,uint8_t direction){
 	_x=_y=_w=_h=0;
 	_display=display;
-	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_BOTTOMUP)?_direction=direction:_direction=TAPE_LEFTRIGHT;
+	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_PLUSMINUS_V)?_direction=direction:_direction=TAPE_LEFTRIGHT;
 	_color0=_color1=_color2=_fg;
 	_limit0=_limit1=_min;
 	_visible=true;
@@ -355,7 +355,7 @@ tapeGauge::tapeGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, 
 	_y=y;
 	_w=w;
 	_h=h;
-	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_BOTTOMUP)?_direction=direction:_direction=TAPE_LEFTRIGHT;
+	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_PLUSMINUS_V)?_direction=direction:_direction=TAPE_LEFTRIGHT;
 	_color0=_color1=_color2=_fg;
 	_limit0=_limit1=_min;
 	_visible=true;
@@ -374,32 +374,15 @@ void tapeGauge::setMinMax(float minimum, float maximum){
 }
 
 void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2){
-	/*
-	if(limit0>_min && limit0<_max){
-		_limit0=limit0;
-		_color0=color0;
-		_color1=color1;
-
-		if (limit1>limit0 && limit1<_max) {
-			_limit1=limit1;
-			_color2=color2;
-		}
-
-	}else{
-		_color0=_color1=_color2=_fg;
-		_limit0=_limit1=_min;
-	}
-	*/
 	_color0=color0;
 	_color1=color1;
 	_color2=color2;
 	_limit0=limit0;
 	_limit1=limit1;
-
 }
 
 void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1){
-	setColors(color0, limit0, color1, limit0, color1);
+	setColors(color0, limit0, color1, _max, color1);
 }
 
 void tapeGauge::setColors(uint16_t color0){
@@ -462,6 +445,7 @@ void tapeGauge::redraw(){
 		  *
 			* Variables:
 			* _canvas_[wh], _tape_[wh] - the maximum width and height of the actual tape to be drawn.
+			* _direction							 - the direction and style of the tape (see Gauges.h)
 			* _gutter_[tblr]           - "free" space incide the border
 			* __val                    - the value as float
 			* _min, _max               - the minimum and maximum that is accepted for __val
@@ -473,15 +457,9 @@ void tapeGauge::redraw(){
 			*  -|======>      |-
 			*   ^min   ^val   ^max
       *   |<----------->|
-			* min: -50
-			* max: 50
-			* val: -10
-			* tape_width: 100
-			* 100/(50-(-50))*(-10-(-50)))=1*40
-			*    tape_width
-			*   tape_length=(tape_width)/(max-min)*(val-min)
-			*/
-		(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT)?_tape_length=(int16_t)((__val-(float)_min)*(float)_tape_w/(_max-_min)+0.5):_tape_length=(int16_t)((__val-(float)_min)*(float)_tape_h/(_max-_min)+0.5);
+		  */
+
+		/*
 		if(_min<0){
 			char _buf[_val.length()+2];
 			_val.toCharArray(_buf,_val.length()+1);
@@ -489,6 +467,8 @@ void tapeGauge::redraw(){
 		}else{
 			Serial.println("normal");
 		}
+		*/
+		(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT)?_tape_length=(int16_t)((__val-(float)_min)*(float)_tape_w/(_max-_min)+0.5):(_direction==TAPE_TOPDOWN||_direction==TAPE_BOTTOMUP)?_tape_length=(int16_t)((__val-(float)_min)*(float)_tape_h/(_max-_min)+0.5):_tape_length=(int16_t)abs(__val*(float)_tape_w/(_max-_min)+0.5);
 		if(_tape_length!=__tape_length){
 			#ifdef _CONSERVE_RAM_
 				_display->fillRect(_x,_y,_w,_h,_bg);
@@ -496,6 +476,7 @@ void tapeGauge::redraw(){
 				_canvas = new GFXcanvas16(_canvas_w,_canvas_h);
 				_canvas->fillScreen(_bg);
 			#endif
+			Serial.printf("tape Direction: %i\n",_direction);
 			/*
 			 *
 			 * The whole tape placement isn't right yet. Too much mucking around with paddings...
@@ -504,9 +485,13 @@ void tapeGauge::redraw(){
 			 */
 
 			if(_direction==TAPE_LEFTRIGHT || _direction==TAPE_RIGHTLEFT){
+				/*
+				 *  horizontal bars from left to right or right to left
+				 */
+
 				(__val>_limit0)?_tapeLimit0=(uint16_t)((_limit0-(float)_min)*_tape_w/(_max-_min)+0.5):_tapeLimit0=0;
 				(__val>_limit1)?_tapeLimit1=(uint16_t)((_limit1-(float)_min)*_tape_w/(_max-_min)+0.5):_tapeLimit1=0;
-				if(_min<0)Serial.printf("tape_limit0: %i, tape_limit1: %i, tape_length: %i\ncolor0: 0x%04x, color1: 0x%04x ,color2: 0x%04x\n\n",_tapeLimit0,_tapeLimit1,_tape_length,_color0,_color1,_color2);
+				//if(_min<0)Serial.printf("tape_limit0: %i, tape_limit1: %i, tape_length: %i\ncolor0: 0x%04x, color1: 0x%04x ,color2: 0x%04x\n\n",_tapeLimit0,_tapeLimit1,_tape_length,_color0,_color1,_color2);
 				if(_direction==TAPE_LEFTRIGHT){
 					if(_tapeLimit1>0) {
 						fillRectHelper(0,0,_tapeLimit0,_tape_h,_color0);
@@ -530,7 +515,12 @@ void tapeGauge::redraw(){
 						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color0);
 					}
 				}
-			}else{
+			}
+			else if(_direction==TAPE_TOPDOWN||_direction==TAPE_BOTTOMUP){
+				/*
+				 *  vertical bars from top to bottom or bottom up
+				 */
+
 				(__val>_limit0)?_tapeLimit0=(uint16_t)(_limit0*_tape_h/(_max-_min)+0.5):_tapeLimit0=0;
 				(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_h/(_max-_min)+0.5):_tapeLimit1=0;
 				if(_direction==TAPE_TOPDOWN){
@@ -556,6 +546,95 @@ void tapeGauge::redraw(){
 						fillRectHelper(0,_h-_tape_length,_tape_w,_tape_length,_color0);
 					}
 				}
+			}
+			else if(_direction==TAPE_PLUSMINUS_H){
+					/*
+					 *  vertical bars around the zero point
+					 *
+					 *  |     <=====|            |
+					 *  ^min  ^val  ^zero        ^max
+					 *
+					 *
+					 *  |           |======>     |
+					 *  ^min        ^zero  ^val  ^max
+					 *
+					 *
+					 * Plan: technically, this is almost like drawing one ltr or one rtl bar.
+					 * 			 basic distinction therefore is if __val < 0 or __val >0
+					 *       additional complexity due to the fact that limit0 and limit1
+					 *			 can sit on both sides of the 0 point
+					 *
+					 */
+					 Serial.println("plusminus horzontal");
+					 uint16_t _zero=(int16_t)abs(_min*(float)_tape_w/(_max-_min)+0.5);
+					 (abs(__val)>abs(_limit0))?_tapeLimit0=(uint16_t)(_limit0*_tape_w/(_max-_min)+0.5):_tapeLimit0=0;
+					 (abs(__val)>abs(_limit1))?_tapeLimit1=(uint16_t)(_limit1*_tape_w/(_max-_min)+0.5):_tapeLimit1=0;
+					 Serial.printf("tape_length: %i, zero: %i, limit0: %i, limit1: %i\n",_tape_length,_zero,_tapeLimit0,_tapeLimit1);
+					 if(__val>0){
+	 					if(_tapeLimit1>0) {
+	 						fillRectHelper(_zero,0,_tapeLimit0,_tape_h,_color0);
+	 						fillRectHelper(_zero+_tapeLimit0,0,_tapeLimit1-_tapeLimit0,_tape_h,_color1);
+	 						fillRectHelper(_zero+_tapeLimit1,0,_tape_length-_tapeLimit1,_tape_h,_color2);
+	 					}
+						else if(_tapeLimit0>0){
+	 						fillRectHelper(_zero,0,_tapeLimit0,_tape_h,_color0);
+	 						fillRectHelper(_zero+_tapeLimit0,0,_tape_length-_tapeLimit0,_tape_h,_color1);
+	 					}
+						else{
+	 						fillRectHelper(_zero,0,_tape_length,_tape_h,_color0);
+	 					}
+	 				}
+					else{
+	 					if(_tapeLimit1>0) {
+	 						fillRectHelper(_zero-_tapeLimit0,0,_tapeLimit0,_tape_h,_color0);
+	 						fillRectHelper(_zero-_tapeLimit1,0,_tapeLimit1-_tapeLimit0,_tape_h,_color1);
+	 						fillRectHelper(_zero-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color2);
+	 					}
+						else if(_tapeLimit0>0){
+	 						fillRectHelper(_zero-_tapeLimit0,0,_tapeLimit0,_tape_h,_color0);
+	 						fillRectHelper(_zero-_tape_length,0,_tape_length-_tapeLimit0,_tape_h, _color1);
+	 					}
+						else{
+	 						fillRectHelper(_zero-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color0);
+	 					}
+	 				}
+			}
+			else if(_direction==TAPE_PLUSMINUS_V){
+					/*
+					 *  horizontal bars around the zero point
+					 */
+					(__val>_limit0)?_tapeLimit0=(uint16_t)((_limit0-(float)_min)*_tape_w/(_max-_min)+0.5):_tapeLimit0=0;
+	 				(__val>_limit1)?_tapeLimit1=(uint16_t)((_limit1-(float)_min)*_tape_w/(_max-_min)+0.5):_tapeLimit1=0;
+
+					if(_min<0)Serial.printf("tape_limit0: %i, tape_limit1: %i, tape_length: %i\ncolor0: 0x%04x, color1: 0x%04x ,color2: 0x%04x\n\n",_tapeLimit0,_tapeLimit1,_tape_length,_color0,_color1,_color2);
+	 				if(_direction==TAPE_LEFTRIGHT){
+	 					if(_tapeLimit1>0) {
+	 						fillRectHelper(0,0,_tapeLimit0,_tape_h,_color0);
+	 						fillRectHelper(_tapeLimit0,0,_tapeLimit1-_tapeLimit0,_tape_h,_color1);
+	 						fillRectHelper(_tapeLimit1,0,_tape_length-_tapeLimit1,_tape_h,_color2);
+	 					}
+						else if(_tapeLimit0>0){
+	 						fillRectHelper(0,0,_tapeLimit0,_tape_h,_color0);
+	 						fillRectHelper(_tapeLimit0,0,_tape_length-_tapeLimit0,_tape_h,_color1);
+	 					}
+						else{
+	 						fillRectHelper(0,0,_tape_length,_tape_h,_color0);
+	 					}
+	 				}
+					else{
+	 					if(_tapeLimit1>0) {
+	 						fillRectHelper(_tape_w-_tapeLimit0,0,_tapeLimit0,_tape_h,_color0);
+	 						fillRectHelper(_tape_w-_tapeLimit1,0,_tapeLimit1-_tapeLimit0,_tape_h,_color1);
+	 						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color2);
+	 					}
+						else if(_tapeLimit0>0){
+	 						fillRectHelper(_tape_w-_tapeLimit0,0,_tapeLimit0,_tape_h,_color0);
+	 						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit0,_tape_h, _color1);
+	 					}
+						else{
+	 						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color0);
+	 					}
+	 				}
 			}
 
 			//Serial.printf("data: value: %f, tape_length: %i\n min: %f, max: %f \nlimit0: %f, limit1: %f\ntape_limit0: %i, tape_limit1: %i\n\n",__val, _tape_length, _min,_max,_limit0,_limit1,_tapeLimit0,_tapeLimit1);

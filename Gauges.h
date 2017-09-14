@@ -61,6 +61,8 @@
 #define TAPE_TOPDOWN    1
 #define TAPE_RIGHTLEFT  2
 #define TAPE_BOTTOMUP   3
+#define TAPE_PLUSMINUS_H 4
+#define TAPE_PLUSMINUS_V 5
 
 
 /*
