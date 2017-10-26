@@ -19,9 +19,9 @@
   #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
   #define pgm_read_word(addr) (*(const unsigned short *)(addr))
   typedef unsigned char prog_uchar;
-  #endif
+#endif
 
-#ifdef __AVR__
+#if defined (__AVR__)||defined (__MK20DX128__) //need more of these, currently only distinguising AVR and Teensy3.0 as low RAM platforms
   #include <avr/pgmspace.h>
   #define _CONSERVE_RAM_
 #endif
@@ -169,6 +169,7 @@ public:
     setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2),
     setColors(uint16_t color0,float limit0, uint16_t),
     setColors(uint16_t color0),
+    setFGColor(uint16_t color0),
     setDirection(uint8_t dir),
     setTicks(uint16_t major, uint16_t minor),
     redraw();

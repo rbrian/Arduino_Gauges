@@ -406,6 +406,10 @@ void tapeGauge::setColors(uint16_t color0){
 	setColors(color0,_min, color0,_min,color0);
 }
 
+void tapeGauge::setFGColor(uint16_t color0){
+	setColors(color0);
+}
+
 void tapeGauge::setDirection(uint8_t direction){
 	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_BOTTOMUP)?_direction=direction:_direction=TAPE_LEFTRIGHT;
 }
