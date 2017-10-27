@@ -28,6 +28,7 @@ setValue	     KEYWORD2
 setMinMax      KEYWORD2
 setColors      KEYWORD2
 setDirection   KEYWORD2
+collisionDetect KEYWORD2
 
 TEXT_TOP       KEYWORD3
 TEXT_MIDDLE    KEYWORD3

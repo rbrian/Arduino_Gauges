@@ -220,6 +220,27 @@ void displayGauge::setMargins(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_
 	setGutter(gutter_l,gutter_r,gutter_t,gutter_b);
 }
 
+boolean displayGauge::collisionDetect(displayGauge *other){
+	if(other->_display != this->_display) return false;
+	uint16_t _oX1=other->_x;
+	uint16_t _oX2=other->_x+other->_w;
+	uint16_t _oY1=other->_y;
+	uint16_t _oY2=other->_y+other->_h;
+
+	uint16_t _tX1=_x;
+	uint16_t _tX2=_x+_w;
+	uint16_t _tY1=_y;
+	uint16_t _tY2=_y+_h;
+
+	if(_oX1 > _tX1 && _oX1 <= _tX2){  // starts within width of this
+		if(_oX2 > _tX1 && _oX2 <= _tX2) return true; // ends within width of this
+		if(_oX2 > _tY2 && _oY2 <= _tY2) return true; // ends within hight of this
+	}
+	if(_oY1 > _tY1 && _oY1 <= _tY2) { // starts within hight of this
+		if(_oX2 > _tX1 && _oX2 <= _tX2) return true; // ends within width of this
+		if(_oX2 > _tY2 && _oY2 <= _tY2) return true; // ends within hight of this
+	}
+}
 /*
  *
  * text class, displays different values as text
