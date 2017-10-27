@@ -30,7 +30,7 @@ The **textGauge** adds what is needed to render textual information
 * **setFont(const GFXfont \*font)** set the font for the Gauge
 * **setVAlign(uint8_t align)** set vertical alignment of data in the box, align is one of **TEXT_TOP, TEXT_MIDDLE, TEXT_BOTTOM**
 * **setHAlign(uint8_t align)** set horizontal alignment of data in the box, align is one of **TEXT_LEFT, TEXT_CENTER, TEXT_RIGHT**
-
+![screenshot](https://github.com/pljakobs/Arduino_Gauges/blob/master/IMAG1194.jpg)
 The **tapeGauge** allows for vertical or horizontal Tapes to be displayed. Those tapes can have up to three color areas defined by two limits
 * **setMinMax(float min, float max)** set the minimum and maximum allowable value for this tape - required to correctly scale
 * **setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2), setColors(uint16_t color0,float limit0, uint16_t), setColors(uint16_t color0)** set the coloring scheme. Five parameters define thre colored segments, three parameters define two segments and a single color means the whole bar has just that color.
