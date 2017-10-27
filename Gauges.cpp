@@ -68,6 +68,7 @@ void Gauge::setValue(const char* val){
 
 void Gauge::setAutoRedraw(bool val){
     _autoRedraw=val;
+		if(_autoRedraw==true) redraw();
 }
 
 displayGauge::displayGauge(Adafruit_GFX *display,uint16_t x, uint16_t y, uint16_t w, uint16_t h){
@@ -147,46 +148,56 @@ void displayGauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t
 }
 
 void displayGauge::setPosition(uint16_t x, uint16_t y){
-	if(_h!=0 && _w!=0){
-		// in case we're moving this, blank out where it was
-		_display->drawRect(_x, _y, _w, _h, _bg);
+	if(_h!=0 && _w!=0 && x!=_X && y!=_y){
+	  bool __visible=_visible;
+		setVisible(false); //hide for resize
+		if(!_autoRedraw) redraw();
+		(x&0x8000)?_x=0:_x=x; //reject values that would be negative if x/y were signed.
+		(y&0x8000)?_y=0:_y=y;
+		setVisible(__visible);
 	}
-	_x=x;
-	_y=y;
 }
 
 void displayGauge::setSize(uint16_t w, uint16_t h){
-	if(_x!=0 && _y!=0){
-		// in case we're moving this, blank out where it was
-		_display->drawRect(_x, _y, _w, _h, _bg);
-	}
+	bool __visible=_visible;
+	setVisible(false); //hide for resize
+	if(!_autoRedraw) redraw();
 	_w=w;
 	_h=h;
+	setVisible(__visible);
 }
 
 void displayGauge::setVisible(bool val){
     _visible=val;
-		if(_visible) redraw();
+		if(_autoRedraw==true) redraw();
 }
 
 void displayGauge::setFGColor(uint16_t fg){
     _fg=fg;
+		if(_autoRedraw==true) redraw();
 }
 
 void displayGauge::setBGColor(uint16_t bg){
     _bg=bg;
+		if(_autoRedraw==true) redraw();
 }
 
 void displayGauge::setDisplay(Adafruit_GFX *display){
-    _display=display;
+	bool __visible=_visible;
+	setVisible(false); //hide for resize
+	if(!_autoRedraw) redraw();
+	_display=display;
+	setVisible(__visible);
 }
 
 void displayGauge::setBorder(uint8_t border){
 	_border=border;
+	if(_autoRedraw==true) redraw();
 }
 
 void displayGauge::setBorderColor(uint16_t bo){
 	_bo=bo;
+	if(_autoRedraw==true) redraw();
 }
 
 void displayGauge::setGutter(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b){
@@ -194,6 +205,7 @@ void displayGauge::setGutter(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t
 	_gutter_r=gutter_r;
 	_gutter_t=gutter_t;
 	_gutter_b=gutter_b;
+	if(_autoRedraw==true) redraw();
 }
 
 void displayGauge::setGutter(uint8_t gutter){
@@ -237,15 +249,24 @@ textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, 
 
 void textGauge::setFont(const GFXfont *font){
     _font=font;
+		if(_autoRedraw==true) redraw();
 }
 
 void textGauge::setVAlign(uint8_t valign){
 	_valign=valign;
+	if(_autoRedraw==true) redraw();
 }
 
 void textGauge::setHAlign(uint8_t halign){
 	_halign=halign;
+	if(_autoRedraw==true) redraw();
 }
+
+void textGauge::setTextWrap(uint8_t wrap){
+	_textWrap=wrap;
+	if(_autoRedraw==true) redraw();
+}
+
 void textGauge::setCursor(uint16_t x, uint16_t y){
 	_cursor_x=x;
 	_cursor_y=y;
@@ -262,6 +283,7 @@ void textGauge::redraw(){
 		_val.toCharArray(_buf,_val.length()+1);
 		#ifdef _CONSERVE_RAM_
 			_display->setTextColor(_fg);
+			_display->setTextWrap(_textWrap);
 			_display->setFont(_font);
 			_display->getTextBounds(_buf, _x+_border, _y+_border, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
 		#else
@@ -269,6 +291,7 @@ void textGauge::redraw(){
 			_canvas->fillScreen(_bg);
 			_canvas->setTextColor(_fg);
 			_canvas->setFont(_font);
+			_canvas->setTextWrap(_textWrap);
 			_canvas->getTextBounds(_buf, 0, 0, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
 		#endif
 
@@ -302,8 +325,10 @@ void textGauge::redraw(){
 					_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
 				}
 			}
-		_display->display();
+	}else{
+		_display->fillRect(_x,_y,_w,_h,_bg); //clear if invisible
 	}
+	_display->display();
 }
 
 /*
@@ -371,6 +396,7 @@ void tapeGauge::setMinMax(float minimum, float maximum){
 		_min=maximum;
 		_max=minimum;
 	}
+	if(_autoRedraw) redraw();
 }
 
 void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2){
@@ -395,7 +421,7 @@ void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float l
 	_color2=color2;
 	_limit0=limit0;
 	_limit1=limit1;
-
+	if(_autoRedraw) redraw();
 }
 
 void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1){
@@ -412,11 +438,13 @@ void tapeGauge::setFGColor(uint16_t color0){
 
 void tapeGauge::setDirection(uint8_t direction){
 	(direction>=TAPE_LEFTRIGHT&&direction<=TAPE_BOTTOMUP)?_direction=direction:_direction=TAPE_LEFTRIGHT;
+	if(_autoRedraw) redraw();
 }
 
 void tapeGauge::setTicks(uint16_t major, uint16_t minor){
 	_tickMajor=major;
 	_tickMinor=minor;
+	if(_autoRedraw) redraw();
 }
 
 void tapeGauge::redraw(){
@@ -576,7 +604,9 @@ void tapeGauge::redraw(){
 				}
 			}
 			//_display->drawRect(_x+_border+1,_y+_border,_w-2*_border-1,_h-2*_border,0xff00);
-			_display->display();
 		}
+	}else{
+		_display->fillRect(_x,_y,_w,_h,_bg); //clear if invisible
 	}
+	_display->display();
 }

@@ -62,7 +62,10 @@
 #define TAPE_RIGHTLEFT  2
 #define TAPE_BOTTOMUP   3
 
-
+#define TEXT_WRAP       true
+#define TEXT_NOWRAP     false
+#define TEXT_MULTILINE  TEXT_WRAP
+#define TEXT_ONELINE    TEXT_NOWRAP
 /*
  * Gauge baseclass
  */
@@ -140,6 +143,7 @@ class textGauge : public displayGauge {
       setCursor(uint16_t x, uint16_t y),
       setVAlign(uint8_t align),
       setHAlign(uint8_t align),
+      setTextWrap(uint8_t wrap),
       redraw();
 	protected:
     uint16_t
@@ -147,7 +151,7 @@ class textGauge : public displayGauge {
       _cursor_y,
       _str_len;
     uint8_t
-      _valign, _halign;
+      _valign, _halign, _textWrap;
   	const GFXfont *_font;
 };
 
@@ -178,7 +182,7 @@ protected:
     _color0,_color1,_color2,
     _tickMajor, _tickMinor;
   uint8_t
-    _direction;
+    _direction,_wrap;
   float
     _min, _max,
     _limit0,_limit1;
