@@ -221,25 +221,44 @@ void displayGauge::setMargins(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_
 }
 
 boolean displayGauge::collisionDetect(displayGauge *other){
-	if(other->_display != this->_display) return false;
+	if(other->_display != this->_display) return false; //not the same display. Can't collide
+
 	uint16_t _oX1=other->_x;
 	uint16_t _oX2=other->_x+other->_w;
 	uint16_t _oY1=other->_y;
 	uint16_t _oY2=other->_y+other->_h;
+  Serial.printf("oX1 %i, oX2 %i, oY1 %i, oY2 %i\n",_oX1, _oX2,_oY1, _oY2);
+	uint16_t _tX1=this->_x;
+	uint16_t _tX2=this->_x+this->_w;
+	uint16_t _tY1=this->_y;
+	uint16_t _tY2=this->_y+this->_h;
+	Serial.printf("tX1 %i, tX2 %i, tY1 %i, tY2 %i\n",_tX1, _tX2,_tY1, _tY2);
+  static bool _in;
 
-	uint16_t _tX1=_x;
-	uint16_t _tX2=_x+_w;
-	uint16_t _tY1=_y;
-	uint16_t _tY2=_y+_h;
-
-	if(_oX1 > _tX1 && _oX1 <= _tX2){  // starts within width of this
-		if(_oX2 > _tX1 && _oX2 <= _tX2) return true; // ends within width of this
-		if(_oX2 > _tY2 && _oY2 <= _tY2) return true; // ends within hight of this
+	if((_oX1 > _tX1) && (_oX1 <= _tX2)){  // starts within width of this
+		if((_oX2 > _tX1) && (_oX2 <= _tX2)) {
+			_in=true;
+			return true;
+		} // ends within width of this
+		if((_oX2 > _tY2) && (_oY2 <= _tY2)) {
+			_in=true;
+			return true;
+		} // ends within hight of this
 	}
-	if(_oY1 > _tY1 && _oY1 <= _tY2) { // starts within hight of this
-		if(_oX2 > _tX1 && _oX2 <= _tX2) return true; // ends within width of this
-		if(_oX2 > _tY2 && _oY2 <= _tY2) return true; // ends within hight of this
+	if((_oY1 > _tY1) && (_oY1 <= _tY2)) { // starts within hight of this
+		if((_oX2 > _tX1 && _oX2 <= _tX2)) {
+			_in=true;
+			return true;
+		}	// ends within width of this
+		if((_oX2 > _tY2 && _oY2 <= _tY2)) {
+			_in=true;
+			return true; }	// ends within hight of this
 	}
+	if (_in){
+		_in=false;
+		return true;
+	} // was in on last call, now out, need refresh
+	return false;
 }
 /*
  *
