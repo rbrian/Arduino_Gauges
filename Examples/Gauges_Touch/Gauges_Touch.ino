@@ -154,8 +154,8 @@ void loop() {
     t_vertical.setValue(p.x);
     pressure.setValue(p.z);
 
-    if(lipsum.collisionDetect(&vertical)) Serial.println("vertical collision");
-    if(lipsum.collisionDetect(&horizontal)) Serial.println("horizontal collision");
+    //if(lipsum.collisionDetect(&vertical)) Serial.println("vertical collision");
+    //if(lipsum.collisionDetect(&horizontal)) Serial.println("horizontal collision");
     if(lipsum.collisionDetect(&vertical) || lipsum.collisionDetect(&horizontal)) lipsum.redraw();
     elapsed.setValue((uint16_t)millis()-_time);
   }else{
