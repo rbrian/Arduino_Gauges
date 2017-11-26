@@ -148,23 +148,37 @@ void displayGauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t
 }
 
 void displayGauge::setPosition(uint16_t x, uint16_t y){
-	if(_h!=0 && _w!=0 && x!=_X && y!=_y){
-	  bool __visible=_visible;
-		setVisible(false); //hide for resize
-		if(!_autoRedraw) redraw();
-		(x&0x8000)?_x=0:_x=x; //reject values that would be negative if x/y were signed.
+	if(!(_h==0 || _w==0) && (x!=_x || y!=_y)){  // only if neither _h nor _w are zero and
+																							// if either the x or y component has been changed
+																							// that is: if the location has changed in any way
+		bool __visible=_visible;
+		if(_visible){
+			setVisible(false); 											// hide for resize
+			if(!_autoRedraw) redraw();							// force redraw, even if no autoRedraw
+		}
+		(x&0x8000)?_x=0:_x=x; 										// reject values that would be negative if x/y were signed.
 		(y&0x8000)?_y=0:_y=y;
-		setVisible(__visible);
+		if(__visible){
+			setVisible(__visible);
+			if(!_autoRedraw) redraw();							// force redraw, even if no autoRedraw
+		}
 	}
 }
 
 void displayGauge::setSize(uint16_t w, uint16_t h){
-	bool __visible=_visible;
-	setVisible(false); //hide for resize
-	if(!_autoRedraw) redraw();
-	_w=w;
-	_h=h;
-	setVisible(__visible);
+	if(w!=_w || h!=_h){
+		bool __visible=_visible;
+		if(_visible){
+			setVisible(false); //hide for resize
+			if(!_autoRedraw) redraw();
+		}
+		_w=w;
+		_h=h;
+		if(__visible){
+			setVisible(__visible);
+			if(!_autoRedraw) redraw();
+		}
+	}
 }
 
 void displayGauge::setVisible(bool val){
@@ -184,10 +198,15 @@ void displayGauge::setBGColor(uint16_t bg){
 
 void displayGauge::setDisplay(Adafruit_GFX *display){
 	bool __visible=_visible;
-	setVisible(false); //hide for resize
-	if(!_autoRedraw) redraw();
+	if(_visible){
+		setVisible(false); //hide for resize
+		if(!_autoRedraw) redraw();
+	}
 	_display=display;
-	setVisible(__visible);
+	if(__visible){
+		setVisible(__visible);
+		if(!_autoRedraw) redraw();
+	}
 }
 
 void displayGauge::setBorder(uint8_t border){
