@@ -212,6 +212,11 @@ void displayGauge::setBorder(uint8_t border){
 	if(_autoRedraw==true) redraw();
 }
 
+void displayGauge::setRotation(uint8_t rot){
+	_rotation=rot;
+	if(_autoRedraw==true) redraw();
+}
+
 void displayGauge::setGutter(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b){
 	_gutter_l=gutter_l;
 	_gutter_r=gutter_r;
@@ -364,10 +369,12 @@ void textGauge::redraw(){
 			if(!_persistent || _canvas==0) {
 				_canvas = new GFXiCanvas(_w-2*_border,_h-2*_border,2);
 				}
+			_canvas->setRotation(_rotation);
 			_canvas->setColor(BG,_bg);
 			_canvas->setColor(FG,_fg);
 			_canvas->setColor(AC,_ac);
 			_canvas->setColor(BO,_bo);
+			_canvas->setTextWrap(_textWrap);
 			_canvas->setTransparent((uint8_t) BG,false);
 			_canvas->setTextColor(FG);
 			_canvas->setFont(_font);
@@ -407,7 +414,7 @@ void textGauge::redraw(){
 				_canvas->drawRect(__j,+__j,_w-2*__j,_h-2*__j,BO);
 			}
 			//pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
-			_canvas->quickDraw((uint16_t)_x+_border,(uint16_t)_y+_border,_display);
+			_canvas->quickDraw((uint16_t)_x,(uint16_t)_y,_display);
 			if(!_persistent) {
 				delete _canvas;
 			}

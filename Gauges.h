@@ -135,6 +135,7 @@ void
 	setMargins(uint8_t gutter),
 	setPalette(uint8_t index, color24 color),
 	setTransparent(bool t),
+  setRotation(uint8_t rot),
   setPersistent(bool p);
 bool
 	collisionDetect(displayGauge *other);
@@ -151,6 +152,7 @@ protected:
 		uint8_t
 			_z,
 			_border,
+      _rotation,
 			_gutter_l, _gutter_r, _gutter_t, _gutter_b;
 		Adafruit_GFX
 			*_display;
