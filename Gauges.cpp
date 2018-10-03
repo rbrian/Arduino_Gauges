@@ -377,7 +377,7 @@ void textGauge::redraw(){
 		#endif
 
 			if(_valign==TEXT_MIDDLE){
-				_position_y=(_h-_bounds_h-_border)>>1;
+				_position_y=(_h-_bounds_h)>>1;
 			}else if(_valign==TEXT_BOTTOM){
 				_position_y=_h-(_bounds_h+_gutter_t+2*_border);
 			}else if(_valign==TEXT_TOP){
@@ -385,7 +385,7 @@ void textGauge::redraw(){
 			}
 
 			if(_halign==TEXT_CENTER){
-				_position_x=(_w-_bounds_w-_border)>>1;
+				_position_x=(_w-_bounds_w)>>1;
 			}else if(_halign==TEXT_RIGHT){
 				_position_x=_w-_border*2-_bounds_w-_gutter_r;
 			}else if(_halign==TEXT_LEFT){
@@ -395,19 +395,24 @@ void textGauge::redraw(){
 			_display->fillRect(_x+_border,_y+_border,_w-2*_border,_h-2*_border,_bg);
 			_display->setCursor(_x+_position_x,_y+_bounds_h+_position_y);
 			_display->print(_buf);
+			if(_border!=0){
+			for(uint8_t __j=0;__j<_border;__j++) {
+				_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
+			}
 		#else
 			_canvas->setCursor(_position_x-_bounds_x1,_position_y-_bounds_y1);
 			_canvas->print(_buf);
+			if(_border!=0){
+			for(uint8_t __j=0;__j<_border;__j++) {
+				_canvas->drawRect(__j,+__j,_w-2*__j,_h-2*__j,BO);
+			}
 			//pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
 			_canvas->quickDraw((uint16_t)_x+_border,(uint16_t)_y+_border,_display);
 			if(!_persistent) {
 				delete _canvas;
 			}
 		#endif
-				if(_border!=0){
-				for(uint8_t __j=0;__j<_border;__j++) {
-					_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
-				}
+
 			}
 	}else{
 		_display->fillRect(_x,_y,_w,_h,_bg); //clear if invisible
