@@ -4,7 +4,7 @@
 
 /*
  *
- * Base Gauge class, knows where on what screen it is and has some basic properties.
+ * Base Gauge class, only knows how to hold and convert a value
  *
  */
 
@@ -66,11 +66,16 @@ void Gauge::setValue(const char* val){
 	if(_changed == true && _autoRedraw==true) redraw();
 }
 
-void Gauge::setAutoRedraw(bool val){
-    _autoRedraw=val;
-		if(_autoRedraw==true) redraw();
-}
+/*
+ * End base Gauge class
+ */
 
+ /*
+  *
+  * Base Gauge class, knows where on what screen it is, has dimensions, visibility, persistent and an associated canvas
+  *
+  */
+/*
 displayGauge::displayGauge(Adafruit_GFX *display,uint16_t x, uint16_t y, uint16_t w, uint16_t h){
 	_display=display;
 	_x=x;
@@ -78,73 +83,45 @@ displayGauge::displayGauge(Adafruit_GFX *display,uint16_t x, uint16_t y, uint16_
 	_w=w;
 	_h=h;
 	_visible=true;
+	_persistent=true;
+}
+
+displayGauge::displayGauge(Adafruit_GFX *display,uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool persistent, bool autoRedraw){
+	_display=display;
+	_x=x;
+	_y=y;
+	_w=w;
+	_h=h;
+	_visible=true;
+	_persistent=persistent;
 }
 
 displayGauge::displayGauge(Adafruit_GFX *display){
 	_x=_y=_w=_h=0;
 	_display=display;
 	_visible=true;
+	_persistent=true;
 }
 
+displayGauge::displayGauge(Adafruit_GFX *display, bool persistent){
+	_x=_y=_w=_h=0;
+	_display=display;
+	_visible=true;
+	_persistent=persistent;
+}
+*/
 displayGauge::displayGauge(){
     _x=_y=_w=_h=0;
     _display=NULL;
 		_visible=true;
+		_persistent=true;
 }
 
 displayGauge::~displayGauge(){
 	_display->fillRect(_x, _y, _w, _h, _bg);
-}
-
-void displayGauge::pushBitmap(uint16_t x, uint16_t y, uint16_t* buffer, uint16_t w, uint16_t h){
-  uint16_t _c=0;
-	uint16_t _p;
-  _display->startWrite();
-	if(w>=h){
-		/*
-		 *  rect is wider than tall, optimizing for horizontal structures (drawing longest possible line)
-		 */
-  	//Serial.println("drawing horizontally");
-		_p=1;
-		for(uint16_t __y=y;__y<y+h;__y++){
-		  for(uint16_t __x=x;__x<x+w;__x++){
-		    while(buffer[_p]==buffer[_p+_c] and __x+_c+1<x+w){
-		      _c++;
-		    }
-		    if(_c>1){
-		      _display->writeFastHLine(__x,__y,_c,buffer[_p]);
-		      _p+=(_c);
-		      __x+=(_c-1);
-		      _c=1;
-		    }else{
-		      _display->writePixel(__x,__y,buffer[_p++]);
-		    }
-		  }
-	  }
-	}else{
-		/*
-		 *  rect is taller than wide, optimizing for vertical structures (drawing longest possible line)
-		 */
-		 //Serial.println("drawing vertically");
-		 for(uint16_t __x=x-1;__x<x+w;__x++){
-			 _p=__x-x+1;
-			 for(uint16_t __y=y;__y<y+h-1;__y++){
-				 //_p=__y*w+__x;
-				 while(buffer[_p]==buffer[_p+_c*w] and __y+_c+1<y+h){
-					 _c++;
-				 }
-				 if(_c>1){
-					 _display->writeFastVLine(__x,__y,_c,buffer[_p]);
-					 _p+=(_c*w);
-					 __y+=(_c-1);
-					 _c=1;
-				 }else{
-					 _display->writePixel(__x,__y,buffer[_p+=w]);
-				 }
-			 }
-		 }
+	if(_persistent){
+		delete _canvas;
 	}
-  _display->endWrite();
 }
 
 void displayGauge::setPosition(uint16_t x, uint16_t y){
@@ -186,36 +163,52 @@ void displayGauge::setVisible(bool val){
 		if(_autoRedraw==true) redraw();
 }
 
-void displayGauge::setFGColor(uint16_t fg){
+void displayGauge::setTransparent(bool val){
+    _transparent=val;
+		if(_autoRedraw==true) redraw();
+}
+
+void displayGauge::setPersistent(bool val){
+	_persistent=val;
+}
+
+void displayGauge::setFGColor(color24 fg){
     _fg=fg;
 		if(_autoRedraw==true) redraw();
 }
 
-void displayGauge::setBGColor(uint16_t bg){
+void displayGauge::setBGColor(color24 bg){
     _bg=bg;
 		if(_autoRedraw==true) redraw();
 }
 
+void displayGauge::setBorderColor(color24 bo){
+	_bo=bo;
+	if(_autoRedraw==true) redraw();
+}
+
+void displayGauge::setAccentColor(color24 ac){
+	_ac=ac;
+	if(_autoRedraw==true) redraw();
+}
+
 void displayGauge::setDisplay(Adafruit_GFX *display){
-	bool __visible=_visible;
-	if(_visible){
-		setVisible(false); //hide for resize
-		if(!_autoRedraw) redraw();
-	}
-	_display=display;
-	if(__visible){
-		setVisible(__visible);
-		if(!_autoRedraw) redraw();
+	if(display!=_display){
+		bool __visible=_visible;
+		if(_visible){
+			setVisible(false); //hide to move from display to display
+			if(!_autoRedraw) redraw();
+		}
+		_display=display;
+		if(__visible){
+			setVisible(__visible);
+			if(!_autoRedraw) redraw();
+		}
 	}
 }
 
 void displayGauge::setBorder(uint8_t border){
 	_border=border;
-	if(_autoRedraw==true) redraw();
-}
-
-void displayGauge::setBorderColor(uint16_t bo){
-	_bo=bo;
 	if(_autoRedraw==true) redraw();
 }
 
@@ -237,6 +230,11 @@ void displayGauge::setMargins(uint8_t gutter){
 
 void displayGauge::setMargins(uint8_t gutter_l,uint8_t gutter_r, uint8_t gutter_t, uint8_t gutter_b){
 	setGutter(gutter_l,gutter_r,gutter_t,gutter_b);
+}
+
+void Gauge::setAutoRedraw(bool val){
+    _autoRedraw=val;
+		if(_autoRedraw==true) redraw();
 }
 
 boolean displayGauge::collisionDetect(displayGauge *other){
@@ -279,6 +277,8 @@ boolean displayGauge::collisionDetect(displayGauge *other){
 	} // was in on last call, now out, need refresh
 	return false;
 }
+
+
 /*
  *
  * text class, displays different values as text
@@ -286,6 +286,10 @@ boolean displayGauge::collisionDetect(displayGauge *other){
  */
 
 textGauge::textGauge(){
+	/*
+	 * minimal constructor
+	 */
+
 	_x=_y=_w=_h=0;
 	_display=0;
 	_visible=true;
@@ -304,6 +308,17 @@ textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, 
 	_w=w;
 	_h=h;
 	_visible=true;
+	_persistent=true;
+}
+
+textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool persistent){
+	_display=display;
+	_x=x;
+	_y=y;
+	_w=w;
+	_h=h;
+	_visible=true;
+	_persistent=persistent;
 }
 
 void textGauge::setFont(const GFXfont *font){
@@ -346,11 +361,18 @@ void textGauge::redraw(){
 			_display->setFont(_font);
 			_display->getTextBounds(_buf, _x+_border, _y+_border, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
 		#else
-			_canvas = new GFXcanvas16(_w-2*_border,_h-2*_border);
-			_canvas->fillScreen(_bg);
-			_canvas->setTextColor(_fg);
+			if(!_persistent || _canvas==0) {
+				_canvas = new GFXiCanvas(_w-2*_border,_h-2*_border,2);
+				}
+			_canvas->setColor(BG,_bg);
+			_canvas->setColor(FG,_fg);
+			_canvas->setColor(AC,_ac);
+			_canvas->setColor(BO,_bo);
+			_canvas->setTransparent((uint8_t) BG,false);
+			_canvas->setTextColor(FG);
 			_canvas->setFont(_font);
 			_canvas->setTextWrap(_textWrap);
+			_canvas->fillScreen(BG);
 			_canvas->getTextBounds(_buf, 0, 0, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
 		#endif
 
@@ -376,8 +398,11 @@ void textGauge::redraw(){
 		#else
 			_canvas->setCursor(_position_x-_bounds_x1,_position_y-_bounds_y1);
 			_canvas->print(_buf);
-			pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
-			delete _canvas;
+			//pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
+			_canvas->quickDraw((uint16_t)_x+_border,(uint16_t)_y+_border,_display);
+			if(!_persistent) {
+				delete _canvas;
+			}
 		#endif
 				if(_border!=0){
 				for(uint8_t __j=0;__j<_border;__j++) {
@@ -458,7 +483,7 @@ void tapeGauge::setMinMax(float minimum, float maximum){
 	if(_autoRedraw) redraw();
 }
 
-void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float limit1, uint16_t color2){
+void tapeGauge::setColors(color24 color0,float limit0, color24 color1, float limit1, color24 color2){
 	/*
 	if(limit0>_min && limit0<_max){
 		_limit0=limit0;
@@ -483,15 +508,15 @@ void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1, float l
 	if(_autoRedraw) redraw();
 }
 
-void tapeGauge::setColors(uint16_t color0,float limit0, uint16_t color1){
+void tapeGauge::setColors(color24 color0,float limit0, color24 color1){
 	setColors(color0, limit0, color1, limit0, color1);
 }
 
-void tapeGauge::setColors(uint16_t color0){
+void tapeGauge::setColors(color24 color0){
 	setColors(color0,_min, color0,_min,color0);
 }
 
-void tapeGauge::setFGColor(uint16_t color0){
+void tapeGauge::setFGColor(color24 color0){
 	setColors(color0);
 }
 
@@ -540,12 +565,13 @@ void tapeGauge::redraw(){
 		uint16_t _tape_length, _tapeLimit0, _tapeLimit1,_canvas_w, _canvas_h,_tape_w,_tape_h;
 
 		float __val;
+
 		__val=_val.toFloat();
 		_canvas_w=_w-2*_border-_gutter_l-_gutter_r;
 		_canvas_h=_h-2*_border-_gutter_t-_gutter_b;
 		_tape_w=_canvas_w;
 		_tape_h=_canvas_h;
-		/*
+			/*
 		 * _tape_[wh] and _canvas_[wh] are synonymous right now, one of them should be removed
 		 */
 
@@ -584,8 +610,20 @@ void tapeGauge::redraw(){
 			#ifdef _CONSERVE_RAM_
 				_display->fillRect(_x,_y,_w,_h,_bg);
 			#else
-				_canvas = new GFXcanvas16(_canvas_w,_canvas_h);
-				_canvas->fillScreen(_bg);
+				if(!_persistent || _canvas==0) {
+					_canvas = new GFXiCanvas(_canvas_w,_canvas_h,3);
+					_canvas->setColor(BG,_bg);
+					_canvas->setColor(FG,_fg);
+					_canvas->setColor(AC,_ac);
+					_canvas->setColor(BO,_bo);
+					_canvas->setColor(TAPE_C0,_color0);
+					_canvas->setColor(TAPE_C1,_color1);
+					_canvas->setColor(TAPE_C2,_color2);
+					_canvas->setTransparent((uint8_t) BG,false);
+					_canvas->setTextColor(FG);
+					_canvas->fillScreen(BG);
+				}
+
 			#endif
 			/*
 			 *
@@ -600,25 +638,25 @@ void tapeGauge::redraw(){
 				if(_min<0)Serial.printf("tape_limit0: %i, tape_limit1: %i, tape_length: %i\ncolor0: 0x%04x, color1: 0x%04x ,color2: 0x%04x\n\n",_tapeLimit0,_tapeLimit1,_tape_length,_color0,_color1,_color2);
 				if(_direction==TAPE_LEFTRIGHT){
 					if(_tapeLimit1>0) {
-						fillRectHelper(0,0,_tapeLimit0,_tape_h,_color0);
-						fillRectHelper(_tapeLimit0,0,_tapeLimit1-_tapeLimit0,_tape_h,_color1);
-						fillRectHelper(_tapeLimit1,0,_tape_length-_tapeLimit1,_tape_h,_color2);
+						fillRectHelper(0,0,_tapeLimit0,_tape_h,TAPE_C0);
+						fillRectHelper(_tapeLimit0,0,_tapeLimit1-_tapeLimit0,_tape_h,TAPE_C1);
+						fillRectHelper(_tapeLimit1,0,_tape_length-_tapeLimit1,_tape_h,TAPE_C2);
 					}else if(_tapeLimit0>0){
-						fillRectHelper(0,0,_tapeLimit0,_tape_h,_color0);
-						fillRectHelper(_tapeLimit0,0,_tape_length-_tapeLimit0,_tape_h,_color1);
+						fillRectHelper(0,0,_tapeLimit0,_tape_h,TAPE_C0);
+						fillRectHelper(_tapeLimit0,0,_tape_length-_tapeLimit0,_tape_h,TAPE_C1);
 					}else{
-						fillRectHelper(0,0,_tape_length,_tape_h,_color0);
+						fillRectHelper(0,0,_tape_length,_tape_h,TAPE_C0);
 					}
 				}else{
 					if(_tapeLimit1>0) {
-						fillRectHelper(_tape_w-_tapeLimit0,0,_tapeLimit0,_tape_h,_color0);
-						fillRectHelper(_tape_w-_tapeLimit1,0,_tapeLimit1-_tapeLimit0,_tape_h,_color1);
-						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color2);
+						fillRectHelper(_tape_w-_tapeLimit0,0,_tapeLimit0,_tape_h,TAPE_C0);
+						fillRectHelper(_tape_w-_tapeLimit1,0,_tapeLimit1-_tapeLimit0,_tape_h,TAPE_C1);
+						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,TAPE_C2);
 					}else if(_tapeLimit0>0){
-						fillRectHelper(_tape_w-_tapeLimit0,0,_tapeLimit0,_tape_h,_color0);
-						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit0,_tape_h, _color1);
+						fillRectHelper(_tape_w-_tapeLimit0,0,_tapeLimit0,_tape_h,TAPE_C0);
+						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit0,_tape_h, TAPE_C1);
 					}else{
-						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,_color0);
+						fillRectHelper(_tape_w-_tape_length,0,_tape_length-_tapeLimit1,_tape_h,TAPE_C0);
 					}
 				}
 			}else{
@@ -626,25 +664,25 @@ void tapeGauge::redraw(){
 				(__val>_limit1)?_tapeLimit1=(uint16_t)(_limit1*_tape_h/(_max-_min)+0.5):_tapeLimit1=0;
 				if(_direction==TAPE_TOPDOWN){
 					if(_tapeLimit1>0) {
-						fillRectHelper(0,0,_tape_w,_tapeLimit0,_color0);
-						fillRectHelper(0,_tapeLimit0,_tape_w,_tapeLimit1-_tapeLimit0,_color1);
-						fillRectHelper(0,_tapeLimit1,_tape_w,_tape_length-_tapeLimit1,_color2);
+						fillRectHelper(0,0,_tape_w,_tapeLimit0,TAPE_C0);
+						fillRectHelper(0,_tapeLimit0,_tape_w,_tapeLimit1-_tapeLimit0,TAPE_C1);
+						fillRectHelper(0,_tapeLimit1,_tape_w,_tape_length-_tapeLimit1,TAPE_C2);
 					}else if(_tapeLimit0>0){
-						fillRectHelper(0,0,_tape_w,_tapeLimit0,_color0);
-						fillRectHelper(0,_tapeLimit0, _tape_w, _tape_length-_tapeLimit0, _color1)
+						fillRectHelper(0,0,_tape_w,_tapeLimit0,TAPE_C0);
+						fillRectHelper(0,_tapeLimit0, _tape_w, _tape_length-_tapeLimit0, TAPE_C1)
 					}else{
-						fillRectHelper(0,0,_tape_w,_tape_length,_color0);
+						fillRectHelper(0,0,_tape_w,_tape_length,TAPE_C0);
 					}
 				}else{
 					if(_tapeLimit1>0) {
-						fillRectHelper(0,_h-_tapeLimit0,_tape_w,_tapeLimit0,_color0);
-						fillRectHelper(0,_h-_tapeLimit1,_tape_w,_tapeLimit1-_tapeLimit0,_color1);
-						fillRectHelper(0,_h-_tape_length,_tape_w, _tape_length-_tapeLimit1,_color2);
+						fillRectHelper(0,_h-_tapeLimit0,_tape_w,_tapeLimit0,TAPE_C0);
+						fillRectHelper(0,_h-_tapeLimit1,_tape_w,_tapeLimit1-_tapeLimit0,TAPE_C1);
+						fillRectHelper(0,_h-_tape_length,_tape_w, _tape_length-_tapeLimit1,TAPE_C2);
 					}else if(_tapeLimit0>0){
-						fillRectHelper(0,_h-_tapeLimit0,_tape_w,_tapeLimit0,_color0);
-						fillRectHelper(0,_h-_tape_length,_tape_w,_tape_length-_tapeLimit0,_color1);
+						fillRectHelper(0,_h-_tapeLimit0,_tape_w,_tapeLimit0,TAPE_C0);
+						fillRectHelper(0,_h-_tape_length,_tape_w,_tape_length-_tapeLimit0,TAPE_C1);
 					}else{
-						fillRectHelper(0,_h-_tape_length,_tape_w,_tape_length,_color0);
+						fillRectHelper(0,_h-_tape_length,_tape_w,_tape_length,TAPE_C0);
 					}
 				}
 			}
@@ -653,8 +691,10 @@ void tapeGauge::redraw(){
 
 			__tape_length=_tape_length; //store current length so we don't have to re-draw on no visible change
 			#ifndef _CONSERVE_RAM_
-				pushBitmap(_x+_border+_gutter_l+1,_y+_border+_gutter_t,_canvas->getBuffer(),_canvas_w,_canvas_h);
-				delete _canvas;
+				_canvas->quickDraw(_x+_border+_gutter_l+1,_y+_border+_gutter_t,_display);
+				if(!_persistent){
+					delete _canvas;
+				}
 			#endif
 
 			if(_border!=0){
