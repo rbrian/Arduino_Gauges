@@ -17,53 +17,54 @@ Gauge::~Gauge(){
 }
 
 void Gauge::redraw(){}
+void Gauge::redraw(bool full){}
 
 void Gauge::setValue(int val){
 	(_val!=String(val))?_changed=true:_changed=false;
 	_val=String(val);
-	if(_changed == true && _autoRedraw==true) redraw();
+	if(_changed == true && _autoRedraw==true) redraw(false);
 }
 
 void Gauge::setValue(short val){
 	(_val!=String(val))?_changed=true:_changed=false;
 	_val=String(val);
-	if(_changed == true && _autoRedraw==true) redraw();
+	if(_changed == true && _autoRedraw==true) redraw(false);
 }
 
 void Gauge::setValue(long val){
 	(_val!=String(val))?_changed=true:_changed=false;
 	_val=String(val);
-	if(_changed == true && _autoRedraw==true) redraw();
+	if(_changed == true && _autoRedraw==true) redraw(false);
 }
 
 void Gauge::setValue(double val){
 	(_val!=String(val))?_changed=true:_changed=false;
 	_val=String(val);
-	if(_changed == true && _autoRedraw==true) redraw();
+	if(_changed == true && _autoRedraw==true) redraw(false);
 }
 
 void Gauge::setValue(float val){
 	(_val!=String(val))?_changed=true:_changed=false;
 	_val=String(val);
-	if(_changed == true && _autoRedraw==true) redraw();
+	if(_changed == true && _autoRedraw==true) redraw(false);
 }
 
 void Gauge::setValue(String val){
 	(_val!=val)?_changed=true:_changed=false;
 	_val=val;
-	if(_changed == true && _autoRedraw==true) redraw();
+	if(_changed == true && _autoRedraw==true) redraw(false);
 }
 
 void Gauge::setValue(char* val){
 	(_val!=String(val))?_changed=true:_changed=false;
 	_val=String(val);
-	if(_changed == true && _autoRedraw==true) redraw();
+	if(_changed == true && _autoRedraw==true) redraw(false);
 }
 
 void Gauge::setValue(const char* val){
 	(_val!=String(val))?_changed=true:_changed=false;
 	_val=String(val);
-	if(_changed == true && _autoRedraw==true) redraw();
+	if(_changed == true && _autoRedraw==true) redraw(false);
 }
 
 /*
@@ -328,22 +329,22 @@ textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, 
 
 void textGauge::setFont(const GFXfont *font){
     _font=font;
-		if(_autoRedraw==true) redraw();
+		if(_autoRedraw==true) redraw(true);
 }
 
 void textGauge::setVAlign(uint8_t valign){
 	_valign=valign;
-	if(_autoRedraw==true) redraw();
+	if(_autoRedraw==true) redraw(true);
 }
 
 void textGauge::setHAlign(uint8_t halign){
 	_halign=halign;
-	if(_autoRedraw==true) redraw();
+	if(_autoRedraw==true) redraw(true);
 }
 
 void textGauge::setTextWrap(uint8_t wrap){
 	_textWrap=wrap;
-	if(_autoRedraw==true) redraw();
+	if(_autoRedraw==true) redraw(true);
 }
 
 void textGauge::setCursor(uint16_t x, uint16_t y){
@@ -352,6 +353,10 @@ void textGauge::setCursor(uint16_t x, uint16_t y){
 }
 
 void textGauge::redraw(){
+	redraw(true);
+}
+
+void textGauge::redraw(bool full){
 	if(_visible){
 		//Serial.printf("updating Gauge with %s\n",_txtval);
 		char _buf[_val.length()+2];
@@ -360,6 +365,7 @@ void textGauge::redraw(){
 						 _position_x, _position_y = 0;
 
 		_val.toCharArray(_buf,_val.length()+1);
+		if(_wr==0 && _hr==0) full=true; //first time do a full redraw
 		#ifdef _CONSERVE_RAM_
 			_display->setTextColor(_fg);
 			_display->setTextWrap(_textWrap);
@@ -418,7 +424,18 @@ void textGauge::redraw(){
 			//pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
 			Serial.printf("start draw with x: %i, y: %i\n",_x,_y);
 			_canvas->setTextHint(false);
-			_canvas->draw((uint16_t)_x,(uint16_t)_y,_display);
+			if(full){
+				_canvas->draw((uint16_t)_x,(uint16_t)_y,_display);
+			}else{
+				_canvas->draw((uint16_t)_x,(uint16_t)_y,_display,_xr,_yr,_wr,_hr);
+			}
+			if(_bounds_w>_wr) _wr=_bounds_w+1;
+			if(_bounds_h>_hr) _hr=_bounds_h+1;
+			Serial.printf("bouding box: x0: %i, y0: %i\nw: %i, h: %i\n\n",_xr,_yr,_wr,_hr);
+			_xr=_position_x-_bounds_x1;
+			_yr=_position_y-_bounds_y1-_bounds_h;
+			_wr=_bounds_w+1;
+			_hr=_bounds_h+1;
 			if(!_persistent) {
 				delete _canvas;
 			}

@@ -102,6 +102,7 @@ class Gauge{
 			setValue(String val),
 			setAutoRedraw(bool val);
 		virtual void redraw();
+    virtual void redraw(bool full);
 	protected:
 		String
 			_val;
@@ -174,12 +175,14 @@ class textGauge : public displayGauge {
 			setVAlign(uint8_t align),
 			setHAlign(uint8_t align),
 			setTextWrap(uint8_t wrap),
-			redraw();
+			redraw(),
+      redraw(bool full);
 	protected:
 		uint16_t
 			_cursor_x,
 			_cursor_y,
-			_str_len;
+			_str_len,
+      _xr,_yr,_wr,_hr;
 		uint8_t
 			_valign, _halign, _textWrap;
 		const GFXfont *_font;
