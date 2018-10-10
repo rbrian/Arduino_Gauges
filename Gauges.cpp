@@ -367,7 +367,9 @@ void textGauge::redraw(){
 			_display->getTextBounds(_buf, _x+_border, _y+_border, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
 		#else
 			if(!_persistent || _canvas==0) {
-				_canvas = new GFXiCanvas(_w-2*_border,_h-2*_border,2);
+				//_canvas = new GFXiCanvas(_w-2*_border,_h-2*_border,2);
+				Serial.printf("creating Canvas with w: %i, h: %i\n",_w, _h);
+				_canvas = new GFXiCanvas(_w,_h,2);
 				}
 			_canvas->setRotation(_rotation);
 			_canvas->setColor(BG,_bg);
@@ -411,10 +413,12 @@ void textGauge::redraw(){
 			_canvas->print(_buf);
 			if(_border!=0){
 			for(uint8_t __j=0;__j<_border;__j++) {
-				_canvas->drawRect(__j,+__j,_w-2*__j,_h-2*__j,BO);
+				_canvas->drawRect(__j,__j,_w-2*__j,_h-2*__j,BO);
 			}
 			//pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
-			_canvas->quickDraw((uint16_t)_x,(uint16_t)_y,_display);
+			Serial.printf("start draw with x: %i, y: %i\n",_x,_y);
+			_canvas->setTextHint(false);
+			_canvas->draw((uint16_t)_x,(uint16_t)_y,_display);
 			if(!_persistent) {
 				delete _canvas;
 			}
@@ -703,7 +707,7 @@ void tapeGauge::redraw(){
 
 			__tape_length=_tape_length; //store current length so we don't have to re-draw on no visible change
 			#ifndef _CONSERVE_RAM_
-				_canvas->quickDraw(_x+_border+_gutter_l+1,_y+_border+_gutter_t,_display);
+				_canvas->draw(_x+_border+_gutter_l+1,_y+_border+_gutter_t,_display);
 				if(!_persistent){
 					delete _canvas;
 				}
