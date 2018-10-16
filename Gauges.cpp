@@ -175,21 +175,28 @@ void displayGauge::setPersistent(bool val){
 
 void displayGauge::setFGColor(color24 fg){
     _fg=fg;
+		if(_canvas) {
+			_canvas->setColor(FG,fg);
+			_canvas->setTextColor(FG);
+		}
 		if(_autoRedraw==true) redraw();
 }
 
 void displayGauge::setBGColor(color24 bg){
     _bg=bg;
+		if(_canvas) _canvas->setColor(BG,bg);
 		if(_autoRedraw==true) redraw();
 }
 
 void displayGauge::setBorderColor(color24 bo){
 	_bo=bo;
+	if(_canvas) _canvas->setColor(BO,bo);
 	if(_autoRedraw==true) redraw();
 }
 
 void displayGauge::setAccentColor(color24 ac){
 	_ac=ac;
+	if(_canvas) _canvas->setColor(AC,ac);
 	if(_autoRedraw==true) redraw();
 }
 
@@ -215,6 +222,7 @@ void displayGauge::setBorder(uint8_t border){
 
 void displayGauge::setRotation(uint8_t rot){
 	_rotation=rot;
+	if(_canvas) _canvas->setRotation(rot);
 	if(_autoRedraw==true) redraw();
 }
 
@@ -329,22 +337,23 @@ textGauge::textGauge(Adafruit_GFX *display, uint16_t x, uint16_t y, uint16_t w, 
 
 void textGauge::setFont(const GFXfont *font){
     _font=font;
-		if(_autoRedraw==true) redraw(true);
+		if(_canvas) _canvas->setFont(font);
+		if(_autoRedraw==true) redraw();
 }
 
 void textGauge::setVAlign(uint8_t valign){
 	_valign=valign;
-	if(_autoRedraw==true) redraw(true);
+	if(_autoRedraw==true) redraw();
 }
 
 void textGauge::setHAlign(uint8_t halign){
 	_halign=halign;
-	if(_autoRedraw==true) redraw(true);
+	if(_autoRedraw==true) redraw();
 }
 
 void textGauge::setTextWrap(uint8_t wrap){
 	_textWrap=wrap;
-	if(_autoRedraw==true) redraw(true);
+	if(_autoRedraw==true) redraw();
 }
 
 void textGauge::setCursor(uint16_t x, uint16_t y){
@@ -374,20 +383,19 @@ void textGauge::redraw(bool full){
 		#else
 			if(!_persistent || _canvas==0) {
 				//_canvas = new GFXiCanvas(_w-2*_border,_h-2*_border,2);
-				Serial.printf("creating Canvas with w: %i, h: %i\n",_w, _h);
+				//Serial.printf("creating Canvas with w: %i, h: %i\n",_w, _h);
 				_canvas = new GFXiCanvas(_w,_h,2);
+				_canvas->setRotation(_rotation);
+				_canvas->setColor(BG,_bg);
+				_canvas->setColor(FG,_fg);
+				_canvas->setColor(AC,_ac);
+				_canvas->setColor(BO,_bo);
+				_canvas->setTextWrap(_textWrap);
+				_canvas->setTransparent((uint8_t) BG,false);
+				_canvas->setTextColor(FG);
+				_canvas->setFont(_font);
+				_canvas->fillScreen(BG);
 				}
-			_canvas->setRotation(_rotation);
-			_canvas->setColor(BG,_bg);
-			_canvas->setColor(FG,_fg);
-			_canvas->setColor(AC,_ac);
-			_canvas->setColor(BO,_bo);
-			_canvas->setTextWrap(_textWrap);
-			_canvas->setTransparent((uint8_t) BG,false);
-			_canvas->setTextColor(FG);
-			_canvas->setFont(_font);
-			_canvas->setTextWrap(_textWrap);
-			_canvas->fillScreen(BG);
 			_canvas->getTextBounds(_buf, 0, 0, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
 		#endif
 
@@ -416,26 +424,36 @@ void textGauge::redraw(bool full){
 			}
 		#else
 			_canvas->setCursor(_position_x-_bounds_x1,_position_y-_bounds_y1);
+			if(full){
+				_canvas->fillScreen(BG);
+			}else{
+				if(_bounds_w>_wr) _wr=_bounds_w;
+				if(_bounds_h>_hr) _hr=_bounds_h;
+				if(_position_x<_xr) _xr=_position_x;
+				if(_position_y<_yr) _yr=_position_y;
+				_canvas->fillRect(_xr,_yr,_wr,_hr,BG);
+			}
 			_canvas->print(_buf);
 			if(_border!=0){
 			for(uint8_t __j=0;__j<_border;__j++) {
 				_canvas->drawRect(__j,__j,_w-2*__j,_h-2*__j,BO);
 			}
 			//pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
-			Serial.printf("start draw with x: %i, y: %i\n",_x,_y);
+			//Serial.printf("start draw with x: %i, y: %i\n",_x,_y);
 			_canvas->setTextHint(false);
+			uint32_t t=millis();
 			if(full){
 				_canvas->draw((uint16_t)_x,(uint16_t)_y,_display);
 			}else{
 				_canvas->draw((uint16_t)_x,(uint16_t)_y,_display,_xr,_yr,_wr,_hr);
 			}
-			if(_bounds_w>_wr) _wr=_bounds_w+1;
-			if(_bounds_h>_hr) _hr=_bounds_h+1;
-			Serial.printf("bouding box: x0: %i, y0: %i\nw: %i, h: %i\n\n",_xr,_yr,_wr,_hr);
-			_xr=_position_x-_bounds_x1;
-			_yr=_position_y-_bounds_y1-_bounds_h;
+			//Serial.printf("draw took %ims\n",millis()-t);
+			//Serial.printf("bouding box: x0: %i, y0: %i\nw: %i, h: %i\n\n",_xr,_yr,_wr,_hr);
+			_xr=_position_x;
+			_yr=_position_y;
 			_wr=_bounds_w+1;
 			_hr=_bounds_h+1;
+
 			if(!_persistent) {
 				delete _canvas;
 			}
