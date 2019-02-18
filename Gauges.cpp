@@ -466,10 +466,13 @@ void textGauge::redraw(bool full){
 				_canvas->fillScreen(BG);
 				Serial.printf("doing full redraw\n");
 			}else{
+				Serial.printf("Rect before  : x=%03i, y=%03i, w=%03i, h=%03i\n",_xr,_yr,_wr,_hr);
 				if(_bounds_w>_wr) _wr=_bounds_w;
 				if(_bounds_h>_hr) _hr=_bounds_h;
-				if(_position_x+_bounds_x1<_xr) _xr=_position_x+_bounds_x1;
-				if(_position_y+_bounds_y1<_yr) _yr=_position_y+_bounds_y1;
+				if(_position_x+_bounds_x1<_xr) _xr=(_position_x+_bounds_x1)<0?0:_position_x+_bounds_x1;
+				if(_position_y+_bounds_y1<_yr) _yr=(_position_y+_bounds_y1)<0?0:_position_y+_bounds_y1;
+				if(_xr<0) _xr=0;
+				if(_yr<0) _yr=0;
 				Serial.printf("Rect to clear: x=%03i, y=%03i, w=%03i, h=%03i\n",_xr,_yr,_wr,_hr);
 
 				_canvas->fillRect(_xr,_yr,_wr+1,_hr+1,BG);
@@ -485,14 +488,19 @@ void textGauge::redraw(bool full){
 			_canvas->setTextHint(true);
 			if(full){
 				_canvas->draw((uint16_t)_x,(uint16_t)_y,_display);
+				_xr,_yr=0;
+				_wr=_w;
+				_hr=_h;
+				Serial.printf("Rect to store: x=%03i, y=%03i, w=%03i, h=%03i\n",_xr,_yr,_wr,_hr);
 			}else{
 				_canvas->draw((uint16_t)_x,(uint16_t)_y,_display,_xr,_yr,_wr,_hr);
+				_xr=_position_x+_bounds_x1;
+				_yr=_position_y+_bounds_y1;
+				_wr=_bounds_w;
+				_hr=_bounds_h;
+				Serial.printf("Rect to store: x=%03i, y=%03i, w=%03i, h=%03i\n",_xr,_yr,_wr,_hr);
 			}
-			_xr=_position_x+_bounds_x1;
-			_yr=_position_y+_bounds_y1;
-			_wr=_bounds_w;
-			_hr=_bounds_h;
-			Serial.printf("Rect to store: x=%03i, y=%03i, w=%03i, h=%03i\n",_xr,_yr,_wr,_hr);
+
 
 			if(!_persistent) {
 				delete _canvas;
