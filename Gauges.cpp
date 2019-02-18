@@ -353,6 +353,7 @@ void textGauge::setHAlign(uint8_t halign){
 
 void textGauge::setTextWrap(uint8_t wrap){
 	_textWrap=wrap;
+	if(_canvas) _canvas->setTextWrap(wrap);
 	if(_autoRedraw==true) redraw();
 }
 
@@ -366,6 +367,27 @@ void textGauge::redraw(){
 }
 
 void textGauge::redraw(bool full){
+	/*
+	*  v gauge._x, gauge._y
+	*  +-------------------------------------------------+
+	*  |#################################################|
+	*  |#                                               #|
+	*  |#        ___  ____                              #|
+	*  |#       |__ \|___ \                             #|
+  *  |#         ) | __) |                             #|
+  *  |#        / / |__ <                              #|
+  *  |#       / /_ ___) |                             #|
+  *  |#      |____|____/                              #|
+	*  |#                                               #|
+	*  |#                                               #|
+	*  |#                                               #|
+	*  |#                                               #|
+	*  |#                                               #|
+	*  |#################################################|
+	*  +-------------------------------------------------+
+	*
+  */
+
 	if(_visible){
 		//Serial.printf("updating Gauge with %s\n",_txtval);
 		char _buf[_val.length()+2];
@@ -396,24 +418,37 @@ void textGauge::redraw(bool full){
 				_canvas->setFont(_font);
 				_canvas->fillScreen(BG);
 				}
-			_canvas->getTextBounds(_buf, 0, 0, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
-		#endif
 
-			if(_valign==TEXT_MIDDLE){
-				_position_y=(_h-_bounds_h)>>1;
-			}else if(_valign==TEXT_BOTTOM){
-				_position_y=_h-(_bounds_h+_gutter_t+2*_border);
-			}else if(_valign==TEXT_TOP){
+			_canvas->getTextBounds(_buf, 0, 0, &_bounds_x1, &_bounds_y1, &_bounds_w, &_bounds_h);
+			Serial.printf("<===========================================>\n");
+			Serial.printf("Value       :  %s\n",_buf);
+			Serial.printf("Text bounds :  x=%03i, y=%03i, w=%03i, h=%03i\n", _bounds_x1, _bounds_y1, _bounds_w, _bounds_h);
+			
+		#endif
+			Serial.printf("Gauge size  :  w=%03i, h=%03i\n",_w,_h);
+
+			// positioning
+			if(_bounds_h < _h){
+				if(_valign==TEXT_MIDDLE){
+					_position_y=(_h+abs(_bounds_h))>>1;
+					//_position_y=(_h-abs(_bounds_h)+abs(_bounds_h)>>1-_bounds_y1)>>1;
+				}else if(_valign==TEXT_BOTTOM){
+					_position_y=_h-(_bounds_h+_gutter_t+2*_border);
+				}else if(_valign==TEXT_TOP){
+					_position_y=_border+_gutter_b;
+				}
+			}else{
 				_position_y=_border+_gutter_b;
 			}
-
+	
 			if(_halign==TEXT_CENTER){
-				_position_x=(_w-_bounds_w)>>1;
+				_position_x=(_w-abs(_bounds_w))>>1;
 			}else if(_halign==TEXT_RIGHT){
 				_position_x=_w-_border*2-_bounds_w-_gutter_r;
 			}else if(_halign==TEXT_LEFT){
 				_position_x=_border+_gutter_l;
 			}
+
 		#ifdef _CONSERVE_RAM_
 			_display->fillRect(_x+_border,_y+_border,_w-2*_border,_h-2*_border,_bg);
 			_display->setCursor(_x+_position_x,_y+_bounds_h+_position_y);
@@ -423,36 +458,41 @@ void textGauge::redraw(bool full){
 				_display->drawRect(_x+1+__j,_y+__j,_w-2*__j-1,_h-2*__j,_bo);
 			}
 		#else
-			_canvas->setCursor(_position_x-_bounds_x1,_position_y-_bounds_y1);
+			_canvas->setCursor(_position_x,_position_y);
+			Serial.printf("cursr pos:     x=%03i, y=%03i\n",_position_x+_bounds_x1,_position_y+_bounds_y1);
+			Serial.printf("Text bounds :  x=%03i, y=%03i, w=%03i, h=%03i\n", _bounds_x1, _bounds_y1, _bounds_w, _bounds_h);
+			Serial.printf("Rect to draw:  x=%03i, y=%03i, w=%03i, h=%03i\n",_position_x+_bounds_x1,_position_y+_bounds_y1, _bounds_w, _bounds_h);
 			if(full){
 				_canvas->fillScreen(BG);
+				Serial.printf("doing full redraw\n");
 			}else{
 				if(_bounds_w>_wr) _wr=_bounds_w;
 				if(_bounds_h>_hr) _hr=_bounds_h;
-				if(_position_x<_xr) _xr=_position_x;
-				if(_position_y<_yr) _yr=_position_y;
-				_canvas->fillRect(_xr,_yr,_wr,_hr,BG);
+				if(_position_x+_bounds_x1<_xr) _xr=_position_x+_bounds_x1;
+				if(_position_y+_bounds_y1<_yr) _yr=_position_y+_bounds_y1;
+				Serial.printf("Rect to clear: x=%03i, y=%03i, w=%03i, h=%03i\n",_xr,_yr,_wr,_hr);
+
+				_canvas->fillRect(_xr,_yr,_wr+1,_hr+1,BG);
 			}
+			
 			_canvas->print(_buf);
 			if(_border!=0){
 			for(uint8_t __j=0;__j<_border;__j++) {
 				_canvas->drawRect(__j,__j,_w-2*__j,_h-2*__j,BO);
 			}
-			//pushBitmap(_x+_border,_y+_border,_canvas->getBuffer(),_w-2*_border,_h-2*_border);
-			//Serial.printf("start draw with x: %i, y: %i\n",_x,_y);
-			_canvas->setTextHint(false);
-			uint32_t t=millis();
+			//_canvas->drawFastHLine(0,_h>>1,_w,BO);
+			//_canvas->drawFastVLine(_w>>1,0,_h,BO);
+			_canvas->setTextHint(true);
 			if(full){
 				_canvas->draw((uint16_t)_x,(uint16_t)_y,_display);
 			}else{
 				_canvas->draw((uint16_t)_x,(uint16_t)_y,_display,_xr,_yr,_wr,_hr);
 			}
-			//Serial.printf("draw took %ims\n",millis()-t);
-			//Serial.printf("bouding box: x0: %i, y0: %i\nw: %i, h: %i\n\n",_xr,_yr,_wr,_hr);
-			_xr=_position_x;
-			_yr=_position_y;
-			_wr=_bounds_w+1;
-			_hr=_bounds_h+1;
+			_xr=_position_x+_bounds_x1;
+			_yr=_position_y+_bounds_y1;
+			_wr=_bounds_w;
+			_hr=_bounds_h;
+			Serial.printf("Rect to store: x=%03i, y=%03i, w=%03i, h=%03i\n",_xr,_yr,_wr,_hr);
 
 			if(!_persistent) {
 				delete _canvas;
